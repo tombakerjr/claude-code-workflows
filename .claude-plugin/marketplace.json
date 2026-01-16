@@ -1,0 +1,19 @@
+{
+  "name": "pr-workflow-marketplace",
+  "description": "PR workflow enforcement plugin for Claude Code",
+  "owner": {
+    "name": "Tom Baker",
+    "url": "https://github.com/tmlb-dev"
+  },
+  "plugins": [
+    {
+      "name": "pr-workflow",
+      "description": "PR workflow enforcement: merge checklists, pre-commit verification, git guardrails, and code review agents",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Tom Baker"
+      }
+    }
+  ]
+}

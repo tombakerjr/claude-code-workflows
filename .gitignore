@@ -1,0 +1,17 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local customizations
+*.local.md
+*.local.json
+
+# Node (if adding any tooling later)
+node_modules/
