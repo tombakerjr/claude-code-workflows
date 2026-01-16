@@ -4,10 +4,10 @@
   "description": "PR workflow enforcement: merge checklists, pre-commit verification, git guardrails, and code review agents",
   "author": {
     "name": "Tom Baker",
-    "url": "https://github.com/tmlb-dev"
+    "url": "https://github.com/tombakerjr"
   },
-  "homepage": "https://github.com/tmlb-dev/claude-code-pr-workflow",
-  "repository": "https://github.com/tmlb-dev/claude-code-pr-workflow",
+  "homepage": "https://github.com/tombakerjr/claude-code-pr-workflow",
+  "repository": "https://github.com/tombakerjr/claude-code-pr-workflow",
   "license": "MIT",
   "keywords": [
     "pr",

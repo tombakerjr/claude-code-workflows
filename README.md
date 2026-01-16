@@ -15,7 +15,7 @@ A Claude Code plugin that enforces PR workflow best practices through guardrails
 ### Option 1: Direct from GitHub (Recommended)
 
 ```bash
-/plugin marketplace add tmlb-dev/claude-code-pr-workflow
+/plugin marketplace add tombakerjr/claude-code-pr-workflow
 /plugin install pr-workflow@claude-code-pr-workflow
 ```
 
@@ -24,7 +24,7 @@ Then restart Claude Code.
 ### Option 2: From Local Clone
 
 ```bash
-git clone https://github.com/tmlb-dev/claude-code-pr-workflow.git
+git clone https://github.com/tombakerjr/claude-code-pr-workflow.git
 /plugin marketplace add /path/to/claude-code-pr-workflow
 /plugin install pr-workflow@pr-workflow-marketplace
 ```

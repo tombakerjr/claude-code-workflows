@@ -3,7 +3,7 @@
   "description": "PR workflow enforcement plugin for Claude Code",
   "owner": {
     "name": "Tom Baker",
-    "url": "https://github.com/tmlb-dev"
+    "url": "https://github.com/tombakerjr"
   },
   "plugins": [
     {
