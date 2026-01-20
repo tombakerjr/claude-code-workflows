@@ -15,3 +15,7 @@ Thumbs.db
 
 # Node (if adding any tooling later)
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
