@@ -1,6 +1,6 @@
 {
   "name": "pr-workflow",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "PR workflow enforcement: merge checklists, pre-commit verification, git guardrails, and code review agents",
   "author": {
     "name": "Tom Baker",

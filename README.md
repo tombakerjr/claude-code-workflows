@@ -9,6 +9,100 @@ A Claude Code plugin that enforces PR workflow best practices through guardrails
 - **Git guardrails** - Blocks direct pushes to main, warns on raw merge commands
 - **Code review agents** - Staff-level comprehensive reviews
 - **Context recovery** - Restore state after context compaction
+- **Execution preferences** - Enforces subagent-driven-development for plan execution
+
+## Feature Development Workflow
+
+This plugin enforces a structured workflow for feature development. The diagram below shows the complete lifecycle from starting work to merging.
+
+```mermaid
+flowchart TD
+    subgraph START ["Start Feature Work"]
+        A[New task/feature request] --> B{On main branch?}
+        B -->|Yes| C[Create feature branch]
+        B -->|No| D[Use current branch]
+        C --> E[git checkout -b feature/name]
+        E --> F[Ready to develop]
+        D --> F
+    end
+
+    subgraph DEV ["Development Iteration"]
+        F --> G[Write code]
+        G --> H[Run code-verifier agent]
+        H --> I{Verification passed?}
+        I -->|No| J[Fix issues]
+        J --> G
+        I -->|Yes| K[Commit changes]
+        K --> L{More work needed?}
+        L -->|Yes| G
+        L -->|No| M[Ready for PR]
+    end
+
+    subgraph PR ["Pull Request"]
+        M --> N[/pr-create]
+        N --> O[Typecheck + Push + Create PR]
+        O --> P[Wait for CI]
+        P --> Q[Request review / Run staff-code-reviewer]
+    end
+
+    subgraph REVIEW ["Review Iteration"]
+        Q --> R{Review feedback?}
+        R -->|Changes requested| S[Address feedback]
+        S --> T[Commit fixes]
+        T --> U[Push updates]
+        U --> P
+        R -->|Approved| V[Ready to merge]
+    end
+
+    subgraph MERGE ["Safe Merge"]
+        V --> W[/pr-merge]
+        W --> X[Typecheck]
+        X --> Y[Verify CI passed]
+        Y --> Z[Wait 10-12 seconds]
+        Z --> AA[Fetch ALL comments]
+        AA --> AB{Blockers found?}
+        AB -->|Yes| AC[Address blockers]
+        AC --> T
+        AB -->|No| AD[Merge PR]
+        AD --> AE[Delete branch]
+        AE --> AF[Done!]
+    end
+
+    style START fill:#e1f5fe
+    style DEV fill:#fff3e0
+    style PR fill:#f3e5f5
+    style REVIEW fill:#e8f5e9
+    style MERGE fill:#fce4ec
+```
+
+### Workflow Phases
+
+| Phase | Key Actions | Plugin Support |
+|-------|-------------|----------------|
+| **Start** | Create feature branch, never commit to main | `git-guard.py` blocks commits on main |
+| **Develop** | Write code, verify before commits | `code-verifier` agent, iterative fixes |
+| **PR Creation** | Typecheck, push, create PR | `/pr-create` command |
+| **Review** | Get feedback, iterate on changes | `staff-code-reviewer` agent |
+| **Merge** | Full checklist before merge | `/pr-merge` with 10-12s wait for delayed comments |
+
+### Git Guards
+
+The plugin prevents common mistakes:
+
+| Action | On Main | On Feature Branch |
+|--------|---------|-------------------|
+| `git commit` | Blocked | Allowed |
+| `git push origin main` | Blocked | N/A |
+| `gh pr merge` | Warned (use /pr-merge) | Warned (use /pr-merge) |
+
+### Execution Preference
+
+When executing implementation plans (from `writing-plans` or similar), this plugin enforces:
+
+- **Use**: `superpowers:subagent-driven-development`
+- **Not**: `superpowers:executing-plans`
+
+Subagent-driven development keeps work in the current session with fresh context per task, avoiding context bloat from long-running executions.
 
 ## Installation
 
@@ -54,8 +148,9 @@ Then restart Claude Code.
 
 | Hook | Event | Function |
 |------|-------|----------|
-| `git-guard.py` | PreToolUse:Bash | Blocks `git push origin main/master`, warns on raw `gh pr merge` |
+| `git-guard.py` | PreToolUse:Bash | Blocks commits on main/master, blocks push to main/master, warns on raw `gh pr merge` |
 | `stop-check.sh` | Stop | Warns about uncommitted changes, open PRs, changes on main |
+| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use subagent-driven-development) |
 
 ## The Merge Checklist
 
