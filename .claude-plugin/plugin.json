@@ -1,22 +1,19 @@
 {
-  "name": "pr-workflow",
-  "version": "1.1.0",
-  "description": "PR workflow enforcement: merge checklists, pre-commit verification, git guardrails, and code review agents",
+  "name": "dev-workflow",
+  "version": "2.0.0",
+  "description": "Development workflow tools: subagent-driven implementation, code review, PR merge workflow",
   "author": {
     "name": "Tom Baker",
     "url": "https://github.com/tombakerjr"
   },
-  "homepage": "https://github.com/tombakerjr/claude-code-pr-workflow",
-  "repository": "https://github.com/tombakerjr/claude-code-pr-workflow",
+  "homepage": "https://github.com/tombakerjr/claude-code-workflows",
+  "repository": "https://github.com/tombakerjr/claude-code-workflows",
   "license": "MIT",
   "keywords": [
-    "pr",
-    "pull-request",
     "workflow",
     "code-review",
-    "merge",
-    "git",
-    "ci",
-    "verification"
+    "subagent",
+    "implementation",
+    "development"
   ]
 }
