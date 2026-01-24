@@ -1,0 +1,66 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  claude-review:
+    # Skip Dependabot PRs - no secrets access, version bumps don't need AI review
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_sticky_comment: true
+          track_progress: true
+          include_fix_links: true
+
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR: #${{ github.event.pull_request.number }}
+
+            Review for actionable issues only. Read CLAUDE.md for project context.
+
+            **Report:**
+            - CRITICAL: Security vulnerabilities, data loss, crashes
+            - FIX: Bugs, logic errors, missing error handling
+            - TEST: Missing tests for new/changed code
+            - CONSIDER: Non-trivial improvements worth discussing
+
+            **Skip:**
+            - PR summary (assume reviewer read description)
+            - Praise or "what's good"
+            - Style nitpicks, minor refactors
+            - Known limitations mentioned in PR description
+
+            **If PR description is misleading:** Add UPDATE PR: [what's wrong]
+
+            **Format:**
+            ```
+            CRITICAL: file.ts:123 - SQL injection in user input
+            FIX: api.ts:45 - Missing null check causes crash
+            TEST: No tests for retry logic
+            CONSIDER: Cache could cause 60s stale data
+            ```
+
+            If no issues: `LGTM - no blocking issues`
+
+            Use inline comments for specific code issues.
+
+          claude_args: |
+            --max-turns 25
+            --allowedTools Read,Glob,Grep,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment
