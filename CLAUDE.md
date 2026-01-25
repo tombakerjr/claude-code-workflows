@@ -98,3 +98,22 @@ Users should customize:
 1. Typecheck commands in `/pr-create` and `/pr-merge`
 2. Review criteria in `staff-code-reviewer.md`
 3. Blocked patterns in `git-guard.py`
+
+## Compaction Hints
+
+When compacting conversation history, preserve:
+- Current task and phase number
+- Git branch and last commit SHA
+- Any blockers or review feedback not yet addressed
+- PR number if one exists
+
+Discard:
+- Full file contents (can re-read)
+- Verbose build/test output
+- Completed task details (just "Task N: complete")
+
+## Token Efficiency
+
+- Clear between unrelated tasks with /clear
+- Compact at 50-80% capacity, don't wait for auto-compact at 95%
+- Have subagents read files themselves rather than passing content inline

@@ -4,6 +4,7 @@ description: >
   Use PROACTIVELY before any commit to verify code quality.
   Runs typecheck, security scan, and debug code checks.
   MUST BE USED after writing code, before git commit.
+model: haiku
 tools: Bash, Read
 ---
 

@@ -13,9 +13,11 @@ Complete merge workflow with CI verification, comment assessment, and fix loop i
 
 Parse and display: PR number, title, state, URL, branch name.
 
-## Step 2: Run Verification
+## Step 2: Verification
 
-Run project's verification commands:
+**CI Trust Mode:** If CI passed within the last hour and no local uncommitted changes exist, skip local verification and proceed to Step 3.
+
+Otherwise, run full verification:
 
 ```bash
 pnpm typecheck && pnpm build && pnpm test

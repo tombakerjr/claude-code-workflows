@@ -4,6 +4,7 @@ description: >
   MUST BE CALLED before any PR merge operation.
   Verifies CI passes, waits for delayed comments, scans for blockers.
   Use PROACTIVELY when about to merge or when asked to check PR status.
+model: haiku
 tools: Bash
 ---
 

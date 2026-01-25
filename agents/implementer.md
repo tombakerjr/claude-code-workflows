@@ -73,9 +73,20 @@ Fix any issues found before reporting.
 
 ### Report Format
 
-When done, report:
-- What you implemented
-- What you tested and test results
-- Files changed
-- Commit SHA
-- Any concerns or issues
+When done, provide this structured report:
+
+```
+## Implementation Complete
+
+**Task:** [name]
+**Files:** [list with paths]
+**Commit:** [SHA]
+
+**Verification:**
+- Typecheck: PASS/FAIL [error summary if fail]
+- Build: PASS/FAIL/SKIPPED
+- Tests: PASS/FAIL/SKIPPED [failure summary if fail]
+
+**Self-Review:** PASS/FAIL
+**Notes:** [concerns, edge cases, or "None"]
+```

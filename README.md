@@ -39,8 +39,8 @@ flowchart TD
     end
 
     subgraph PR ["Pull Request"]
-        M --> N[/pr-create]
-        N --> O[Typecheck + Push + Create PR]
+        M --> N["/pr-create"]
+        N --> O["Typecheck + Push + Create PR"]
         O --> P[Wait for CI]
         P --> Q[Request review / Run staff-code-reviewer]
     end
@@ -55,7 +55,7 @@ flowchart TD
     end
 
     subgraph MERGE ["Safe Merge"]
-        V --> W[/pr-merge]
+        V --> W["/pr-merge"]
         W --> X[Typecheck]
         X --> Y[Verify CI passed]
         Y --> Z[Wait 10-12 seconds]
@@ -141,6 +141,7 @@ Then restart Claude Code.
 | Agent | Description |
 |-------|-------------|
 | `staff-code-reviewer` | Comprehensive review: security, correctness, performance, architecture |
+| `quick-reviewer` | Fast combined spec+quality review for simple tasks (≤2 files) |
 | `code-verifier` | Pre-commit: typecheck, security scan, debug code detection |
 | `pr-verifier` | Pre-merge: CI status, comment wait, blocker detection |
 

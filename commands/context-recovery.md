@@ -10,6 +10,14 @@ allowed-tools: Bash(git:*), Bash(gh:*), Read
 
 Run this if context feels incomplete or after compaction.
 
+## Quick Recovery (Default)
+
+!`git branch --show-current && git status -s && gh pr view --json number,state,title 2>/dev/null || echo "No PR"`
+
+If this is sufficient, stop here. Otherwise continue to Full Recovery.
+
+## Full Recovery
+
 ## Step 1: Git State
 
 !`git branch --show-current && echo "---" && git status --short && echo "---" && git log --oneline -5`

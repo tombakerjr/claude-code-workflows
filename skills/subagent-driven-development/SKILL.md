@@ -15,6 +15,18 @@ Execute plan by dispatching implementer agent per task, with verification gates 
 - Tasks are mostly independent
 - Want to stay in current session
 
+## Task Classification
+
+Classify each task before dispatching:
+
+| Complexity | Impl Model | Review Path | Indicators |
+|------------|------------|-------------|------------|
+| SIMPLE | from plan (often haiku) | quick-reviewer only | ≤2 files, config, boilerplate, mechanical |
+| STANDARD | from plan (usually sonnet) | spec → quality → (phase) | Multi-file, business logic, error handling |
+| COMPLEX | from plan (sonnet/opus) | spec → quality → phase | Only if plan explicitly requires |
+
+**Note:** Implementation model comes from the planning stage's per-task recommendation. Trust the plan.
+
 ## Model Selection
 
 **Planning stage** should include model recommendation per task (usually haiku or sonnet).
@@ -27,6 +39,7 @@ Execute plan by dispatching implementer agent per task, with verification gates 
 |------|-------|---------------|----------|
 | Implementer (standard) | implementer | sonnet | haiku if plan says |
 | Implementer (simple) | implementer | sonnet | haiku if plan says |
+| Quick reviewer | quick-reviewer | haiku | - |
 | Spec reviewer | spec-reviewer | sonnet | - |
 | Quality reviewer | quality-reviewer | sonnet | - |
 | Staff reviewer | staff-code-reviewer | opus | - |
@@ -40,6 +53,7 @@ SETUP
 2. Read plan, extract ALL tasks with:
    - Full task text
    - Recommended model (default: sonnet)
+   - Complexity classification (SIMPLE/STANDARD/COMPLEX)
    - Context/dependencies
 3. Create TodoWrite with all tasks
 
@@ -63,21 +77,16 @@ PER TASK
 +---------------------------------------------------------------+
                               |
                               v
-+-- SPEC REVIEW ------------------------------------------------+
-| 9. Dispatch spec reviewer (sonnet)                            |
++-- REVIEW (conditional based on complexity) -------------------+
+| SIMPLE tasks:                                                 |
+|   9a. Dispatch quick-reviewer (haiku) - single pass           |
 |                                                               |
-|    If ISSUES -> dispatch implementer with feedback            |
-|    -> Loop to VERIFY then SPEC REVIEW (max 3 attempts)        |
-+---------------------------------------------------------------+
-                              |
-                              v
-+-- QUALITY REVIEW ---------------------------------------------+
-| 10. Dispatch code quality reviewer (sonnet)                   |
+| STANDARD+ tasks:                                              |
+|   9b. Dispatch spec-reviewer (sonnet)                         |
+|   10. Dispatch quality-reviewer (sonnet)                      |
 |                                                               |
-|     If CRITICAL/IMPORTANT -> dispatch implementer with        |
-|     feedback -> Loop to VERIFY then QUALITY REVIEW            |
-|     (max 3 attempts)                                          |
-|     MINOR issues: Note, don't block                           |
+|   If ISSUES -> dispatch implementer with feedback             |
+|   -> Loop to VERIFY then REVIEW (max 3 attempts)              |
 +---------------------------------------------------------------+
                               |
                               v
@@ -87,7 +96,9 @@ PER TASK
 PHASE BOUNDARY
 ======================================================================
 +-- PHASE REVIEW -----------------------------------------------+
-| 13. Dispatch staff-code-reviewer (opus)                       |
+| 13. Skip phase review if ALL tasks in phase were SIMPLE       |
+|                                                               |
+| Otherwise: Dispatch staff-code-reviewer (opus)                |
 |     Commits: [phase_start_sha]..[current_sha]                 |
 |                                                               |
 |     If CRITICAL/IMPORTANT -> implementer fixes -> re-verify   |
@@ -99,6 +110,45 @@ FINAL
 14. Final staff-code-reviewer (opus) - entire implementation
 15. Create PR (follow repo template if exists)
 16. Invoke /pr-merge workflow (or user invokes manually)
+```
+
+## Fix Loop Severity
+
+Classify fix complexity to optimize model usage:
+
+| Fix Type | Model | Max Attempts | Indicators |
+|----------|-------|--------------|------------|
+| MINOR | haiku (override) | 2 | Typo, missing import, lint fix |
+| STANDARD | sonnet | 2 | Logic error, error handling, test fix |
+| COMPLEX | sonnet → opus (with approval) | 2 + escalate | Architectural feedback, multi-file fix |
+
+**Escalation for COMPLEX fixes:**
+After 2 failed sonnet attempts on a COMPLEX fix, ask user for approval:
+
+```
+ESCALATION: Complex fix failing after 2 attempts.
+Issue: [description]
+Options:
+1. Escalate to opus (higher cost, better reasoning)
+2. Skip and document as known issue
+3. Manual intervention
+```
+
+## Structured Fix Feedback Format
+
+When dispatching implementer for fixes, use this JSON format:
+
+```json
+{
+  "iteration": N,
+  "status": "review_failure|test_failure|build_failure",
+  "file": "path/to/file.ts",
+  "issues": [
+    {"line": 47, "issue": "description", "fix": "suggested fix"}
+  ],
+  "previous_fix": "what was tried last",
+  "max_attempts": 3
+}
 ```
 
 ## Dispatching Subagents
@@ -120,11 +170,22 @@ Task tool:
     [path]
 ```
 
-### Implementer (Fix Mode)
+### Implementer (Fix Mode - MINOR)
 ```
 Task tool:
   subagent_type: implementer
-  model: [same as original]
+  model: haiku  # override for MINOR fixes
+  description: "Fix minor issue: [description]"
+  prompt: |
+    ## Minor Fix Required
+    [structured feedback JSON]
+```
+
+### Implementer (Fix Mode - STANDARD/COMPLEX)
+```
+Task tool:
+  subagent_type: implementer
+  model: [same as original, or escalate to opus for COMPLEX]
   description: "Fix [spec/quality/build] issues for Task N"
   prompt: |
     ## Fix Required
@@ -134,7 +195,7 @@ Task tool:
     [task text for context]
 
     ## Issues to Fix
-    [EXACT FEEDBACK from reviewer]
+    [structured feedback JSON]
 
     ## Instructions
     1. Fix ONLY the issues mentioned
@@ -143,7 +204,23 @@ Task tool:
     4. Commit: fix: address [spec/quality] review feedback
 ```
 
-### Spec Reviewer
+### Quick Reviewer (SIMPLE tasks only)
+```
+Task tool:
+  subagent_type: quick-reviewer
+  description: "Quick review for Task N"
+  prompt: |
+    ## What Was Requested
+    [task text]
+
+    ## What Was Built
+    [implementer's report]
+
+    ## Files to Inspect
+    [list]
+```
+
+### Spec Reviewer (STANDARD+ tasks)
 ```
 Task tool:
   subagent_type: spec-reviewer
@@ -159,7 +236,7 @@ Task tool:
     [list]
 ```
 
-### Quality Reviewer
+### Quality Reviewer (STANDARD+ tasks)
 ```
 Task tool:
   subagent_type: quality-reviewer
@@ -215,7 +292,9 @@ Options:
 - Use opus for every implementation task
 
 **Always:**
-- Pass specific feedback to fix subagents
+- Classify task complexity before dispatching
+- Use quick-reviewer for SIMPLE tasks
+- Pass specific feedback to fix subagents (use JSON format)
 - Re-verify after every fix
 - Re-review after fixes
 - Track attempts
@@ -225,6 +304,7 @@ Options:
 
 **Uses:**
 - `dev-workflow:implementer` - task implementation (sonnet, or haiku if plan specifies)
+- `dev-workflow:quick-reviewer` - fast combined review for simple tasks (haiku)
 - `dev-workflow:spec-reviewer` - spec compliance check (sonnet)
 - `dev-workflow:quality-reviewer` - quick quality gate (sonnet)
 - `dev-workflow:staff-code-reviewer` - comprehensive phase/final reviews (opus)
