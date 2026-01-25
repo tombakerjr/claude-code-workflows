@@ -151,6 +151,21 @@ When dispatching implementer for fixes, use this JSON format:
 }
 ```
 
+**Validation:** Before passing feedback JSON to implementer, verify it's valid:
+```bash
+echo '$FEEDBACK_JSON' | python3 -c "import json,sys; json.load(sys.stdin)" && echo "Valid JSON"
+```
+
+If validation fails, fall back to plain text feedback with clear structure:
+```
+## Fix Required (Attempt N of 3)
+Status: [review_failure|test_failure|build_failure]
+File: path/to/file.ts
+Issues:
+1. Line 47: [issue] → [fix]
+Previous attempt: [what was tried]
+```
+
 ## Dispatching Subagents
 
 ### Implementer (Initial)

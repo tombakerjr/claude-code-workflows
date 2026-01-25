@@ -15,7 +15,25 @@ Parse and display: PR number, title, state, URL, branch name.
 
 ## Step 2: Verification
 
-**CI Trust Mode:** If CI passed within the last hour and no local uncommitted changes exist, skip local verification and proceed to Step 3.
+**CI Trust Mode:** Skip local verification if ALL of these are true:
+1. CI passed (check in Step 3)
+2. CI completed within the last hour
+3. No local uncommitted changes
+
+Check CI freshness:
+```bash
+# Get CI completion time and check if within 1 hour
+CI_TIME=$(gh pr checks --json completedAt -q '.[0].completedAt' 2>/dev/null)
+if [ -n "$CI_TIME" ]; then
+  CI_EPOCH=$(date -d "$CI_TIME" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CI_TIME" +%s 2>/dev/null)
+  NOW_EPOCH=$(date +%s)
+  AGE_MINS=$(( (NOW_EPOCH - CI_EPOCH) / 60 ))
+  echo "CI completed $AGE_MINS minutes ago"
+  [ $AGE_MINS -lt 60 ] && echo "CI is fresh - can use trust mode" || echo "CI is stale - run local verification"
+fi
+```
+
+If CI is fresh and `git status` shows clean working tree, skip to Step 3.
 
 Otherwise, run full verification:
 
