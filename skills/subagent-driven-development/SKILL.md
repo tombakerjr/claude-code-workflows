@@ -21,11 +21,11 @@ Classify each task before dispatching:
 
 | Complexity | Impl Model | Review Path | Indicators |
 |------------|------------|-------------|------------|
-| SIMPLE | from plan (often haiku) | quick-reviewer only | ≤2 files, config, boilerplate, mechanical |
-| STANDARD | from plan (usually sonnet) | spec → quality → (phase) | Multi-file, business logic, error handling |
-| COMPLEX | from plan (sonnet/opus) | spec → quality → phase | Only if plan explicitly requires |
+| SIMPLE | haiku (via Task tool model param) | quick-reviewer only | ≤2 files, config, boilerplate, mechanical |
+| STANDARD | sonnet (default) | spec → quality → (phase) | Multi-file, business logic, error handling |
+| COMPLEX | sonnet or opus (via Task tool) | spec → quality → phase | Only if plan explicitly requires |
 
-**Note:** Implementation model comes from the planning stage's per-task recommendation. Trust the plan.
+**Note:** The implementer agent defaults to sonnet. To use haiku for simple tasks, pass `model: haiku` in the Task tool call. Planning should recommend models per task.
 
 ## Model Selection
 
