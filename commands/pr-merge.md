@@ -26,10 +26,14 @@ Check CI freshness:
 CI_TIME=$(gh pr checks --json completedAt -q '.[0].completedAt' 2>/dev/null)
 if [ -n "$CI_TIME" ]; then
   CI_EPOCH=$(date -d "$CI_TIME" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CI_TIME" +%s 2>/dev/null)
-  NOW_EPOCH=$(date +%s)
-  AGE_MINS=$(( (NOW_EPOCH - CI_EPOCH) / 60 ))
-  echo "CI completed $AGE_MINS minutes ago"
-  [ $AGE_MINS -lt 60 ] && echo "CI is fresh - can use trust mode" || echo "CI is stale - run local verification"
+  if [ -n "$CI_EPOCH" ]; then
+    NOW_EPOCH=$(date +%s)
+    AGE_MINS=$(( (NOW_EPOCH - CI_EPOCH) / 60 ))
+    echo "CI completed $AGE_MINS minutes ago"
+    [ $AGE_MINS -lt 60 ] && echo "CI is fresh - can use trust mode" || echo "CI is stale - run local verification"
+  else
+    echo "Unable to parse CI completion time - running local verification"
+  fi
 fi
 ```
 
