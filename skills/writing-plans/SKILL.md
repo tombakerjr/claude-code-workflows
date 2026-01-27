@@ -423,7 +423,7 @@ Create endpoint to search profiles by name or email.
 - `dev-workflow:subagent-driven-development` - executes the plan
 
 **Works with:**
-- `superpowers:brainstorming` - use before planning if requirements unclear
+- `dev-workflow:brainstorming` - use before planning if requirements unclear
 - `dev-workflow:test-driven-development` - embedded in task structure
 - `dev-workflow:systematic-debugging` - for bug fix plans
 

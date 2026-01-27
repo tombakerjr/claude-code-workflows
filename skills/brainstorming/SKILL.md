@@ -158,7 +158,7 @@ Ready to create implementation plan?
 This will break the design into concrete tasks with verification steps.
 ```
 
-Chain to `superpowers:writing-plans`
+Chain to `dev-workflow:writing-plans`
 
 ## When to Use This Skill
 
@@ -188,7 +188,7 @@ Chain to `superpowers:writing-plans`
 - Worktree provides clean environment for implementation
 - Easy to abandon if design changes during implementation
 
-**Chains to `superpowers:writing-plans`:**
+**Chains to `dev-workflow:writing-plans`:**
 - Design document becomes input to planning
 - Plan breaks design into tasks with verification
 - Each task references relevant sections of design
