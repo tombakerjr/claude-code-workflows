@@ -58,11 +58,48 @@ pnpm typecheck && pnpm build && pnpm test
 
 **If checks failed:** Stop. CI must pass before merge.
 
-## Step 4: Wait for Delayed Comments
+## Step 4: Poll for Claude Review Comment
 
-Review comments often post 5-15 seconds AFTER CI completes.
+The Claude code review ALWAYS posts a comment. Wait for it before proceeding.
 
-!`echo "Waiting for delayed review comments..." && sleep 5`
+```bash
+# Poll for Claude review comment
+MAX_RETRIES=12
+RETRY_COUNT=0
+FOUND=0
+
+echo "Polling for Claude code review comment..."
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  # Fetch all comments and reviews
+  COMMENTS=$(gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$(gh pr view --json number -q .number)/comments --jq '.[].user.login + ": " + .[].body' 2>/dev/null)
+  REVIEWS=$(gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$(gh pr view --json number -q .number)/reviews --jq 'select(.body != "") | .user.login + ": " + .body' 2>/dev/null)
+
+  ALL_TEXT="$COMMENTS $REVIEWS"
+
+  # Look for Claude review indicators (bot username or review keywords)
+  if echo "$ALL_TEXT" | grep -iq "claude\|code-review\|github-actions"; then
+    echo "✓ Claude review comment found"
+    FOUND=1
+    break
+  fi
+
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+  echo "Retry $RETRY_COUNT/$MAX_RETRIES - waiting 5 seconds..."
+  sleep 5
+done
+
+if [ $FOUND -eq 0 ]; then
+  echo "⚠️  WARNING: No Claude review comment found after 60 seconds"
+  echo "This is unexpected. The review may still be processing."
+  echo ""
+  echo "Do you want to:"
+  echo "1. Wait longer (another 60 seconds)"
+  echo "2. Proceed without review comment (NOT RECOMMENDED)"
+  echo "3. Abort merge"
+  exit 1
+fi
+```
 
 ## Step 5: Fetch All Comments
 
