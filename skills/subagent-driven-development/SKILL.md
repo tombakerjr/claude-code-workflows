@@ -326,4 +326,8 @@ Options:
 - `/pr-merge` command - CI check, comment assessment, merge
 
 **Works with:**
-- `superpowers:writing-plans` - creates plans with model recommendations
+- `dev-workflow:writing-plans` - creates plans with model recommendations
+- `dev-workflow:brainstorming` - design exploration before planning
+- `dev-workflow:systematic-debugging` - bug investigation workflow
+- `dev-workflow:test-driven-development` - TDD discipline for implementation
+- `dev-workflow:using-git-worktrees` - isolated workspaces for parallel execution
