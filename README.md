@@ -123,7 +123,7 @@ Subagent-driven development keeps work in the current session with fresh context
 
 ```bash
 /plugin marketplace add tombakerjr/claude-code-pr-workflow
-/plugin install pr-workflow@claude-code-pr-workflow
+/plugin install dev-workflow@claude-code-pr-workflow
 ```
 
 Then restart Claude Code.
@@ -133,7 +133,7 @@ Then restart Claude Code.
 ```bash
 git clone https://github.com/tombakerjr/claude-code-pr-workflow.git
 /plugin marketplace add /path/to/claude-code-pr-workflow
-/plugin install pr-workflow@pr-workflow-marketplace
+/plugin install dev-workflow@tombakerjr-claude-tools
 ```
 
 Then restart Claude Code.

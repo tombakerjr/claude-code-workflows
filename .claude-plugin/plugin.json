@@ -6,8 +6,8 @@
     "name": "Tom Baker",
     "url": "https://github.com/tombakerjr"
   },
-  "homepage": "https://github.com/tombakerjr/claude-code-workflows",
-  "repository": "https://github.com/tombakerjr/claude-code-workflows",
+  "homepage": "https://github.com/tombakerjr/claude-code-pr-workflow",
+  "repository": "https://github.com/tombakerjr/claude-code-pr-workflow",
   "license": "MIT",
   "keywords": [
     "workflow",
