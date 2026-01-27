@@ -1,7 +1,7 @@
 {
   "name": "dev-workflow",
-  "version": "2.1.0",
-  "description": "Development workflow tools: subagent-driven implementation, code review, PR merge workflow",
+  "version": "3.0.0",
+  "description": "Complete development workflow: brainstorming, planning, TDD, debugging, subagent execution, code review, PR merge",
   "author": {
     "name": "Tom Baker",
     "url": "https://github.com/tombakerjr"
