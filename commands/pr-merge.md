@@ -72,8 +72,8 @@ echo "Polling for Claude code review comment..."
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
   # Fetch all comments and reviews
-  COMMENTS=$(gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$(gh pr view --json number -q .number)/comments --jq '.[].user.login + ": " + .[].body' 2>/dev/null)
-  REVIEWS=$(gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$(gh pr view --json number -q .number)/reviews --jq 'select(.body != "") | .user.login + ": " + .body' 2>/dev/null)
+  COMMENTS=$(gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$(gh pr view --json number -q .number)/comments --jq '.[] | .user.login + ": " + .body' 2>/dev/null)
+  REVIEWS=$(gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$(gh pr view --json number -q .number)/reviews --jq '.[] | select(.body != "") | .user.login + ": " + .body' 2>/dev/null)
 
   ALL_TEXT="$COMMENTS $REVIEWS"
 

@@ -66,7 +66,7 @@ flowchart TD
         T -->|No| U[Address feedback]
         U --> S
         T -->|Yes| V["/pr-merge"]
-        V --> W["Checklist: typecheck, CI, wait 10-12s, scan comments"]
+        V --> W["Checklist: typecheck, CI, poll for review comment, scan"]
         W --> X{Blockers?}
         X -->|Yes| U
         X -->|No| Y[Merge & cleanup]
@@ -185,13 +185,12 @@ Then restart Claude Code.
 The `/pr-merge` command enforces this critical workflow:
 
 1. **Typecheck** - Catch type errors before merge
-2. **CI passes** - All checks must show passed
-3. **Wait 10-12 seconds** - Review comments post AFTER CI passes
-4. **Fetch ALL comments** - Don't miss delayed bot comments
-5. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
-6. **Only merge when clear** - Human verification required
+2. **CI passes** - Use `gh pr checks --watch` to wait for completion
+3. **Poll for review comment** - Claude review ALWAYS posts a comment
+4. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
+5. **Only merge when clear** - Human verification required
 
-**Why the 10-12 second wait?** Many CI/review bots post their comments several seconds *after* CI completes. Without waiting, you'll miss critical review feedback.
+**Why poll for the review comment?** Claude code review ALWAYS posts a comment (either approving or requesting fixes). The absence of this comment is NOT tacit approval - we poll until found to ensure no review feedback is missed.
 
 ## Usage Examples
 
