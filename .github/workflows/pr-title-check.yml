@@ -1,0 +1,49 @@
+name: PR Title Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-pr-title:
+    name: Validate PR title follows Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Require conventional commit types
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          # Require a scope (optional - remove if you don't want to enforce)
+          requireScope: false
+          # Disable uppercase checking for subject
+          subjectPattern: ^.+$
+          subjectPatternError: |
+            PR title must follow Conventional Commits format:
+            <type>: <description>
+
+            Examples:
+              feat: add new brainstorming skill
+              fix: correct jq expression in pr-merge
+              docs: update README with workflow diagram
+              chore: bump version to 3.0.0
+
+            Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
