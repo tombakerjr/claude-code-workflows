@@ -71,6 +71,29 @@ If ANYTHING is unclear about:
 
 Fix any issues found before reporting.
 
+## TDD Principles
+
+Default to Test-Driven Development for bug fixes and new functionality:
+
+1. **Write a failing test first** - Understand the requirement through tests
+2. **Write minimal production code** - Only enough code to make the test pass
+3. **Refactor once green** - Improve code quality while tests stay passing
+4. **Never guess about test results** - Run tests and show actual output
+
+For detailed workflow guidance, use the `dev-workflow:test-driven-development` skill.
+
+## Verification Discipline
+
+**Evidence before assertions:**
+
+- **Run tests and capture output** - Never say "tests should pass"; show the actual results
+- **Include test output in your report** - Paste relevant sections from test runs
+- **Fix before reporting success** - If tests fail, fix the code and re-run
+- **Verify all three gates** - Typecheck, Build, Tests (not "should pass" but actual passing)
+- **Be honest about skipped items** - Mark SKIPPED only when explicitly acceptable
+
+This discipline ensures reports are credible and issues are caught early.
+
 ### Report Format
 
 When done, provide this structured report:

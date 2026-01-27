@@ -1,89 +1,102 @@
-# PR Workflow Plugin for Claude Code
+# Development Workflow Plugin for Claude Code
 
-A Claude Code plugin that enforces PR workflow best practices through guardrails, verification agents, and workflow commands.
+A comprehensive Claude Code plugin for feature development, bug fixes, and PR workflows. Enforces best practices through upfront planning, parallelized subagent execution, verification agents, and workflow commands.
 
 ## Features
 
+- **Upfront planning** - Brainstorming and structured implementation plans before code
+- **Subagent execution** - Parallelized work with fresh context per task
+- **Git worktree support** - Isolated workspaces for parallel development
 - **Pre-commit verification** - Type checking, security scans, debug code detection
 - **PR merge checklist** - CI verification, delayed comment detection, blocker scanning
 - **Git guardrails** - Blocks direct pushes to main, warns on raw merge commands
 - **Code review agents** - Staff-level comprehensive reviews
 - **Context recovery** - Restore state after context compaction
-- **Execution preferences** - Enforces subagent-driven-development for plan execution
 
-## Feature Development Workflow
+## Philosophy
 
-This plugin enforces a structured workflow for feature development. The diagram below shows the complete lifecycle from starting work to merging.
+This plugin enforces three core principles:
+
+### 1. Planning Before Implementation
+Features start with **brainstorming** (Socratic exploration of requirements and design), followed by **writing plans** that break work into bite-sized, verifiable tasks. This catches issues early and provides clear success criteria.
+
+### 2. Subagents for Context Hygiene
+Implementation uses **subagent-driven development** where:
+- Main conversation stays clean (planning and orchestration)
+- Each task gets fresh context (implementer subagent reads files it needs)
+- Prevents context bloat from 50k+ token file dumps
+- Enables independent work verification
+
+### 3. Parallelization Through Isolation
+**Git worktrees** + subagents enable true parallel development:
+- Multiple features/experiments in isolated workspaces
+- Subagents work independently without blocking
+- Easy cleanup (delete worktree, no branch pollution)
+
+## Complete Development Workflow
 
 ```mermaid
 flowchart TD
-    subgraph START ["Start Feature Work"]
-        A[New task/feature request] --> B{On main branch?}
-        B -->|Yes| C[Create feature branch]
-        B -->|No| D[Use current branch]
-        C --> E[git checkout -b feature/name]
-        E --> F[Ready to develop]
-        D --> F
+    subgraph FEATURE ["Feature Development Path"]
+        A[New feature request] --> B[Brainstorming skill]
+        B --> C["Explore requirements & design"]
+        C --> D[Using-git-worktrees skill]
+        D --> E[Create isolated workspace]
+        E --> F[Writing-plans skill]
+        F --> G["Break into tasks with acceptance criteria"]
+        G --> H[Subagent-driven-development skill]
+        H --> I["Parallel execution with fresh context"]
+        I --> J["/pr-create"]
+        J --> K[PR ready]
     end
 
-    subgraph DEV ["Development Iteration"]
-        F --> G[Write code]
-        G --> H[Run code-verifier agent]
-        H --> I{Verification passed?}
-        I -->|No| J[Fix issues]
-        J --> G
-        I -->|Yes| K[Commit changes]
-        K --> L{More work needed?}
-        L -->|Yes| G
-        L -->|No| M[Ready for PR]
+    subgraph BUG ["Bug Fix Path"]
+        L[Bug report] --> M[Systematic-debugging skill]
+        M --> N["4-phase root cause analysis"]
+        N --> O[Test-driven-development skill]
+        O --> P["Red → Green → Refactor"]
+        P --> Q[Commit fix]
+        Q --> R["/pr-create"]
+        R --> K
     end
 
-    subgraph PR ["Pull Request"]
-        M --> N["/pr-create"]
-        N --> O["Typecheck + Push + Create PR"]
-        O --> P[Wait for CI]
-        P --> Q[Request review / Run staff-code-reviewer]
+    subgraph MERGE ["PR Merge Workflow"]
+        K --> S[CI + Reviews]
+        S --> T{Approved?}
+        T -->|No| U[Address feedback]
+        U --> S
+        T -->|Yes| V["/pr-merge"]
+        V --> W["Checklist: typecheck, CI, poll for review comment, scan"]
+        W --> X{Blockers?}
+        X -->|Yes| U
+        X -->|No| Y[Merge & cleanup]
     end
 
-    subgraph REVIEW ["Review Iteration"]
-        Q --> R{Review feedback?}
-        R -->|Changes requested| S[Address feedback]
-        S --> T[Commit fixes]
-        T --> U[Push updates]
-        U --> P
-        R -->|Approved| V[Ready to merge]
-    end
-
-    subgraph MERGE ["Safe Merge"]
-        V --> W["/pr-merge"]
-        W --> X[Typecheck]
-        X --> Y[Verify CI passed]
-        Y --> Z[Wait 10-12 seconds]
-        Z --> AA[Fetch ALL comments]
-        AA --> AB{Blockers found?}
-        AB -->|Yes| AC[Address blockers]
-        AC --> T
-        AB -->|No| AD[Merge PR]
-        AD --> AE[Delete branch]
-        AE --> AF[Done!]
-    end
-
-    style START fill:#e1f5fe
-    style DEV fill:#fff3e0
-    style PR fill:#f3e5f5
-    style REVIEW fill:#e8f5e9
+    style FEATURE fill:#e3f2fd
+    style BUG fill:#fff3e0
     style MERGE fill:#fce4ec
 ```
 
-### Workflow Phases
+### Feature Development Path
 
-| Phase | Key Actions | Plugin Support |
-|-------|-------------|----------------|
-| **Start** | Create feature branch, never commit to main | `git-guard.py` blocks commits on main |
-| **Develop** | Write code, verify before commits | `code-verifier` agent, iterative fixes |
-| **PR Creation** | Typecheck, push, create PR | `/pr-create` command |
-| **Review** | Get feedback, iterate on changes | `staff-code-reviewer` agent |
-| **Merge** | Full checklist before merge | `/pr-merge` with 10-12s wait for delayed comments |
+| Phase | Skill/Command | Purpose |
+|-------|---------------|---------|
+| **1. Design** | `brainstorming` | Socratic exploration of requirements and design trade-offs |
+| **2. Isolate** | `using-git-worktrees` | Create isolated workspace (optional, for parallel work) |
+| **3. Plan** | `writing-plans` | Break feature into bite-sized tasks with acceptance criteria |
+| **4. Execute** | `subagent-driven-development` | Parallel execution with fresh context per task |
+| **5. PR** | `/pr-create` | Typecheck, push, create PR |
+| **6. Merge** | `/pr-merge` | Full checklist with delayed comment detection |
+
+### Bug Fix Path
+
+| Phase | Skill/Command | Purpose |
+|-------|---------------|---------|
+| **1. Analyze** | `systematic-debugging` | 4-phase root cause analysis (gather, hypothesize, verify, fix) |
+| **2. Test** | `test-driven-development` | Red-green-refactor discipline |
+| **3. Commit** | N/A | Commit fix with conventional message |
+| **4. PR** | `/pr-create` | Create PR for review |
+| **5. Merge** | `/pr-merge` | Full merge checklist |
 
 ### Git Guards
 
@@ -99,8 +112,8 @@ The plugin prevents common mistakes:
 
 When executing implementation plans (from `writing-plans` or similar), this plugin enforces:
 
-- **Use**: `superpowers:subagent-driven-development`
-- **Not**: `superpowers:executing-plans`
+- **Use**: `dev-workflow:subagent-driven-development`
+- **Not**: Alternative execution methods that cause context bloat
 
 Subagent-driven development keeps work in the current session with fresh context per task, avoiding context bloat from long-running executions.
 
@@ -110,7 +123,7 @@ Subagent-driven development keeps work in the current session with fresh context
 
 ```bash
 /plugin marketplace add tombakerjr/claude-code-pr-workflow
-/plugin install pr-workflow@claude-code-pr-workflow
+/plugin install dev-workflow@claude-code-pr-workflow
 ```
 
 Then restart Claude Code.
@@ -120,7 +133,7 @@ Then restart Claude Code.
 ```bash
 git clone https://github.com/tombakerjr/claude-code-pr-workflow.git
 /plugin marketplace add /path/to/claude-code-pr-workflow
-/plugin install pr-workflow@pr-workflow-marketplace
+/plugin install dev-workflow@tombakerjr-claude-tools
 ```
 
 Then restart Claude Code.
@@ -144,6 +157,20 @@ Then restart Claude Code.
 | `quick-reviewer` | Fast combined spec+quality review for simple tasks (≤2 files) |
 | `code-verifier` | Pre-commit: typecheck, security scan, debug code detection |
 | `pr-verifier` | Pre-merge: CI status, comment wait, blocker detection |
+| `implementer` | Task implementation agent (Sonnet default, Haiku for mechanical work) |
+| `spec-reviewer` | Verify implementation matches spec and acceptance criteria |
+| `quality-reviewer` | Fast quality gate: code quality, test coverage, documentation |
+
+### Skills
+
+| Skill | Description |
+|-------|-------------|
+| `subagent-driven-development` | Execute implementation plans with parallel subagents and fresh context |
+| `test-driven-development` | Red-green-refactor discipline for features and bug fixes |
+| `systematic-debugging` | 4-phase root cause analysis: gather, hypothesize, verify, fix |
+| `writing-plans` | Create bite-sized task plans with acceptance criteria |
+| `using-git-worktrees` | Create isolated workspaces for parallel development |
+| `brainstorming` | Socratic exploration of requirements and design trade-offs |
 
 ### Hooks
 
@@ -158,13 +185,12 @@ Then restart Claude Code.
 The `/pr-merge` command enforces this critical workflow:
 
 1. **Typecheck** - Catch type errors before merge
-2. **CI passes** - All checks must show passed
-3. **Wait 10-12 seconds** - Review comments post AFTER CI passes
-4. **Fetch ALL comments** - Don't miss delayed bot comments
-5. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
-6. **Only merge when clear** - Human verification required
+2. **CI passes** - Use `gh pr checks --watch` to wait for completion
+3. **Poll for review comment** - Claude review ALWAYS posts a comment
+4. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
+5. **Only merge when clear** - Human verification required
 
-**Why the 10-12 second wait?** Many CI/review bots post their comments several seconds *after* CI completes. Without waiting, you'll miss critical review feedback.
+**Why poll for the review comment?** Claude code review ALWAYS posts a comment (either approving or requesting fixes). The absence of this comment is NOT tacit approval - we poll until found to ensure no review feedback is missed.
 
 ## Usage Examples
 
@@ -237,15 +263,6 @@ blocked = [
 - `gh` CLI (GitHub CLI) for PR operations
 - Git
 - For Windows: Git for Windows (provides bash for hooks)
-
-## Recommended Pairing
-
-This plugin works well with the [superpowers](https://github.com/obra/superpowers) plugin:
-
-- `subagent-driven-development` - Main agent coordinates, subagents implement
-- `systematic-debugging` - Structured root cause analysis
-- `verification-before-completion` - Evidence before success claims
-- `receiving-code-review` - Rigorous feedback response
 
 ## License
 

@@ -4,11 +4,11 @@ This file provides guidance to Claude Code when working with this plugin.
 
 ## Overview
 
-This is a Claude Code plugin that enforces PR workflow best practices:
-- Pre-commit code verification
-- PR merge checklists with delayed comment detection
-- Git guardrails (block main push, warn on raw merge)
-- Comprehensive code review agents
+This is a comprehensive Claude Code plugin that supports the full development workflow:
+- **Planning**: Brainstorming, specification, and implementation planning
+- **Implementation**: Test-driven development, systematic debugging, and subagent-driven execution
+- **Review**: Comprehensive code reviews with multiple agent tiers
+- **Merge**: Pre-commit verification, PR merge checklists with delayed comment detection, and git guardrails
 
 ## Plugin Structure
 
@@ -26,6 +26,13 @@ claude-code-pr-workflow/
 │   ├── pr-status.md           # /pr-status
 │   ├── pr-merge.md            # /pr-merge
 │   └── context-recovery.md    # /context-recovery
+├── skills/                 # Workflow skills
+│   ├── subagent-driven-development/   # Execute implementation plans
+│   ├── test-driven-development/       # TDD workflow
+│   ├── systematic-debugging/          # Debug root cause analysis
+│   ├── writing-plans/                 # Create implementation plans
+│   ├── using-git-worktrees/           # Isolated git worktrees
+│   └── brainstorming/                 # Design dialogue for features
 ├── hooks/                  # Event handlers
 │   ├── hooks.json             # Hook configuration
 │   ├── run-hook.cmd           # Cross-platform wrapper
@@ -40,14 +47,14 @@ claude-code-pr-workflow/
 ### Testing Changes
 
 1. Make changes to plugin files
-2. Uninstall if already installed: `/plugin uninstall pr-workflow@pr-workflow-marketplace`
-3. Reinstall: `/plugin install pr-workflow@pr-workflow-marketplace`
-4. Restart Claude Code for hooks to take effect
+2. Run `claude plugin update`
+3. Restart Claude Code for hooks to take effect
 
 ### Adding New Components
 
 - **New command**: Create `commands/name.md` with frontmatter
 - **New agent**: Create `agents/name.md` with frontmatter
+- **New skill**: Create `skills/skill-name/` directory with `skill.md` and supporting files
 - **New hook**: Add to `hooks/hooks.json`, create script in `hooks/`
 
 ### Cross-Platform Hooks
@@ -91,6 +98,16 @@ Agents are invoked automatically based on their descriptions or explicitly:
 - "Run the code-verifier agent" - Pre-commit checks
 - "Use staff-code-reviewer to review my changes" - Full code review
 - "Check if this PR is safe to merge" - PR verification
+
+### Skill Invocation
+
+Skills provide structured workflows for common development tasks:
+- "Use dev-workflow:brainstorming" - Start design dialogue for new features
+- "Use dev-workflow:systematic-debugging" - Debug with root cause analysis
+- "Use dev-workflow:writing-plans" - Create implementation plan with tasks
+- "Use dev-workflow:subagent-driven-development" - Execute implementation plans with independent tasks
+- "Use dev-workflow:test-driven-development" - TDD workflow with test-first approach
+- "Use dev-workflow:using-git-worktrees" - Isolated git worktrees for complex features
 
 ## Customization
 
