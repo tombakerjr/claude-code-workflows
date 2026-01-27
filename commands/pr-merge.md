@@ -52,14 +52,17 @@ pnpm typecheck && pnpm build && pnpm test
 
 !`gh pr checks`
 
-**If checks pending:** Wait and re-check. Do not proceed until all pass.
+**If checks pending:** Wait for all checks to complete.
+
+!`gh pr checks --watch`
+
 **If checks failed:** Stop. CI must pass before merge.
 
 ## Step 4: Wait for Delayed Comments
 
 Review comments often post 5-15 seconds AFTER CI completes.
 
-!`echo "Waiting 12 seconds for delayed review comments..." && sleep 12`
+!`echo "Waiting for delayed review comments..." && sleep 5`
 
 ## Step 5: Fetch All Comments
 

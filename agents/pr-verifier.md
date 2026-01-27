@@ -20,16 +20,20 @@ Execute these steps in order:
    - ALL checks must show passed
    - If any pending or failed: BLOCKED
 
-3. **Wait for delayed comments**: `sleep 12`
-   - Comments often post 5-15 seconds after CI passes
+3. **Watch CI completion**: `gh pr checks --watch`
+   - Waits for all checks to complete
    - This step is CRITICAL - never skip it
 
-4. **Fetch all comments**:
+4. **Wait for delayed comments**: `sleep 5`
+   - Comments often post 5-15 seconds after CI passes
+   - Short wait after checks complete to catch delayed comments
+
+5. **Fetch all comments**:
    ```bash
    gh api repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/issues/$(gh pr view --json number -q .number)/comments --jq '.[] | "\(.user.login): \(.body)"'
    ```
 
-5. **Scan for blockers**:
+6. **Scan for blockers**:
    - CRITICAL = BLOCKED
    - FIX = BLOCKED
    - BLOCKER = BLOCKED
