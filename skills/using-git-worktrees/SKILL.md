@@ -59,43 +59,37 @@ git branch -a | grep feature-name
 git branch feature-name
 ```
 
-**Create worktree with smart directory naming:**
+**Create worktree inside the repo's `.worktrees/` directory:**
 
 ```bash
-# Sibling directory pattern: ../repo-feature-name
-# Example: claude-code-workflows → ../claude-code-workflows-feature-auth
+# Internal directory pattern: .worktrees/BRANCH_NAME
+# Example: .worktrees/feature-auth
 
-cd /home/tbaker/workspace/claude-code-workflows
-git worktree add ../claude-code-workflows-feature-auth feature-auth
+git worktree add .worktrees/feature-auth feature-auth
 ```
 
 **Directory naming convention:**
-- Pattern: `../REPO_NAME-BRANCH_NAME`
-- Example: `../claude-code-workflows-context-recovery`
-- Keeps worktrees organized as siblings to main repo
-- Easy to identify and clean up later
+- Pattern: `.worktrees/BRANCH_NAME`
+- Example: `.worktrees/feature-auth`
+- Stays inside the repo, respecting Claude Code's permission scoping
+- No additional user approval needed for file operations
+- Ensure `.worktrees/` is in `.gitignore`
 
 **Checkpoint:** Worktree created. Directory exists.
 
-### Phase 3: Navigate and Verify
+### Phase 3: Verify Worktree
 
-**Navigate to worktree:**
-
-```bash
-cd ../claude-code-workflows-feature-auth
-```
-
-**Verify worktree state:**
+**Verify worktree state (use `git -C` from the main repo):**
 
 ```bash
-# Confirm branch and clean state
-git status
+# Confirm branch and clean state in the worktree
+git -C .worktrees/feature-auth status
 
 # Verify worktree list
 git worktree list
 ```
 
-**Checkpoint:** In worktree directory. Branch is correct. State is clean.
+**Checkpoint:** Worktree exists. Branch is correct. State is clean.
 
 ### Phase 4: Chain to Implementation Planning
 
@@ -114,23 +108,17 @@ The implementation plan will execute in this isolated worktree, preventing any c
 
 **When work is merged or PR is created:**
 
-1. **Return to main repo:**
-
-```bash
-cd /home/tbaker/workspace/claude-code-workflows
-```
-
-2. **Remove worktree:**
+1. **Remove worktree:**
 
 ```bash
 # Remove worktree directory and unregister it
-git worktree remove ../claude-code-workflows-feature-auth
+git worktree remove .worktrees/feature-auth
 
 # Or if directory was manually deleted:
 git worktree prune
 ```
 
-3. **Delete branch (if merged):**
+2. **Delete branch (if merged):**
 
 ```bash
 # Delete local branch
@@ -157,13 +145,13 @@ git worktree list
 
 ```bash
 # Create worktree for new branch
-git worktree add ../repo-branch-name branch-name
+git worktree add .worktrees/branch-name branch-name
 
 # Create worktree for existing branch
-git worktree add ../repo-existing-branch existing-branch
+git worktree add .worktrees/existing-branch existing-branch
 
 # Create worktree and new branch from specific commit
-git worktree add -b new-branch ../repo-new-branch abc123
+git worktree add -b new-branch .worktrees/new-branch abc123
 ```
 
 ### Managing Worktrees
@@ -173,29 +161,23 @@ git worktree add -b new-branch ../repo-new-branch abc123
 git worktree list
 
 # Remove specific worktree
-git worktree remove ../repo-branch-name
+git worktree remove .worktrees/branch-name
 
 # Remove worktree (if already deleted manually)
 git worktree prune
 
 # Remove worktree with uncommitted changes (force)
-git worktree remove --force ../repo-branch-name
+git worktree remove --force .worktrees/branch-name
 ```
 
 ### Working in Worktrees
 
 ```bash
-# Navigate to worktree
-cd ../repo-branch-name
-
-# All git commands work normally
-git status
-git add .
-git commit -m "feat: implement feature"
-git push origin branch-name
-
-# Return to main repo
-cd /home/tbaker/workspace/claude-code-workflows
+# Use git -C to run commands in worktree from the main repo
+git -C .worktrees/branch-name status
+git -C .worktrees/branch-name add .
+git -C .worktrees/branch-name commit -m "feat: implement feature"
+git -C .worktrees/branch-name push origin branch-name
 ```
 
 ## Process Flow
@@ -205,16 +187,15 @@ cd /home/tbaker/workspace/claude-code-workflows
 1. **Verify main repo state** - `git status` shows clean
 2. **Check branch availability** - `git branch -a | grep feature-name` is empty
 3. **Create feature branch** - `git branch feature-name`
-4. **Create worktree** - `git worktree add ../repo-feature-name feature-name`
-5. **Navigate to worktree** - `cd ../repo-feature-name`
-6. **Verify worktree** - `git status`, `git worktree list`
-7. **Chain to writing-plans** - Ready for implementation planning
+4. **Create worktree** - `git worktree add .worktrees/feature-name feature-name`
+5. **Verify worktree** - `git -C .worktrees/feature-name status`, `git worktree list`
+6. **Chain to writing-plans** - Ready for implementation planning
 
 ### Verification at Each Phase
 
 - After SAFETY CHECKS: Main clean, branch name available
 - After CREATE: Worktree exists, branch created
-- After NAVIGATE: In worktree directory, correct branch
+- After VERIFY: Worktree on correct branch, state is clean
 - After CHAIN: Implementation plan can execute in isolation
 
 ## Integration with Other Skills
@@ -238,18 +219,19 @@ cd /home/tbaker/workspace/claude-code-workflows
 
 ❌ Creating worktree when main repo is dirty
 ❌ Using branch name that already exists
-❌ Creating worktree in subdirectory of main repo
-❌ Forgetting to navigate to worktree after creation
+❌ Creating worktrees as sibling directories outside the repo (breaks permission scoping)
+❌ Forgetting to verify worktree state after creation
 ❌ Leaving worktrees around after feature is merged
 ❌ Using worktree for quick branch switches (just use `git switch`)
 ❌ Creating nested worktrees
+❌ Forgetting to add `.worktrees/` to `.gitignore`
 
 ## Success Criteria
 
 ✅ Main repo state is clean before worktree creation
 ✅ Branch name is unique (doesn't exist locally or remotely)
-✅ Worktree created in sibling directory with clear naming
-✅ Successfully navigated to worktree directory
+✅ Worktree created inside `.worktrees/` directory
+✅ `.worktrees/` is in `.gitignore`
 ✅ Worktree list shows both main and new worktree
 ✅ Implementation plan chains after worktree setup
 ✅ Cleanup performed after feature merge/completion
@@ -260,7 +242,6 @@ cd /home/tbaker/workspace/claude-code-workflows
 SCENARIO: Implementing new authentication feature with parallel agents
 
 Phase 1 - SAFETY CHECKS
-$ cd /home/tbaker/workspace/claude-code-workflows
 $ git status
   → On branch main, working tree clean ✓
 $ git branch -a | grep feature-auth
@@ -268,48 +249,46 @@ $ git branch -a | grep feature-auth
 
 Phase 2 - CREATE
 $ git branch feature-auth
-$ git worktree add ../claude-code-workflows-feature-auth feature-auth
+$ git worktree add .worktrees/feature-auth feature-auth
   → Preparing worktree (new branch 'feature-auth')
   → Checking out files: 100% done
 $ git worktree list
-  → /home/tbaker/workspace/claude-code-workflows [main]
-  → /home/tbaker/workspace/claude-code-workflows-feature-auth [feature-auth]
+  → /home/user/project [main]
+  → /home/user/project/.worktrees/feature-auth [feature-auth]
 
-Phase 3 - NAVIGATE
-$ cd ../claude-code-workflows-feature-auth
-$ git status
+Phase 3 - VERIFY
+$ git -C .worktrees/feature-auth status
   → On branch feature-auth, nothing to commit, working tree clean ✓
 
 Phase 4 - CHAIN TO PLANNING
 → Invoke dev-workflow:writing-plans
 → Create implementation plan for authentication feature
-→ Plan executes in isolated worktree
+→ Plan executes in isolated worktree (use git -C .worktrees/feature-auth ...)
 → No conflicts with main workspace
 
 Phase 5 - CLEANUP (after merge)
-$ cd /home/tbaker/workspace/claude-code-workflows
-$ git worktree remove ../claude-code-workflows-feature-auth
+$ git worktree remove .worktrees/feature-auth
 $ git branch -d feature-auth
 $ git worktree list
-  → /home/tbaker/workspace/claude-code-workflows [main]
+  → /home/user/project [main]
   → Worktree cleaned up ✓
 ```
 
 ## Directory Naming Examples
 
 ```
-Main repo: /home/tbaker/workspace/my-app
-Worktrees:
-  ../my-app-feature-auth      → Authentication feature
-  ../my-app-fix-login-bug     → Bug fix branch
-  ../my-app-refactor-api      → Refactoring work
-  ../my-app-add-tests         → Test additions
+Main repo: /home/user/workspace/my-app
+Worktrees (inside .worktrees/):
+  .worktrees/feature-auth      → Authentication feature
+  .worktrees/fix-login-bug     → Bug fix branch
+  .worktrees/refactor-api      → Refactoring work
+  .worktrees/add-tests         → Test additions
 
-Main repo: /home/tbaker/workspace/claude-code-workflows
-Worktrees:
-  ../claude-code-workflows-context-recovery
-  ../claude-code-workflows-pr-merge-improvements
-  ../claude-code-workflows-new-skill
+Main repo: /home/user/workspace/claude-code-workflows
+Worktrees (inside .worktrees/):
+  .worktrees/context-recovery
+  .worktrees/pr-merge-improvements
+  .worktrees/new-skill
 ```
 
 ## Troubleshooting
@@ -334,7 +313,7 @@ git fetch origin
 git worktree list
 
 # Remove if stale
-git worktree remove ../repo-branch-name
+git worktree remove .worktrees/branch-name
 
 # Or prune all stale worktrees
 git worktree prune
@@ -344,21 +323,19 @@ git worktree prune
 
 ```bash
 # Check if directory is a worktree
-git worktree list | grep directory-name
+git worktree list | grep branch-name
 
 # If not a worktree, remove or use different name
-rm -rf ../directory-name
+rm -rf .worktrees/branch-name
 ```
 
 ### "Cannot remove worktree with uncommitted changes"
 
 ```bash
-# Option 1: Commit or stash changes
-cd ../repo-branch-name
-git add .
-git commit -m "WIP: save work"
+# Option 1: Commit or stash changes in the worktree
+git -C .worktrees/branch-name add .
+git -C .worktrees/branch-name commit -m "WIP: save work"
 
 # Option 2: Force remove (loses changes)
-cd /home/tbaker/workspace/main-repo
-git worktree remove --force ../repo-branch-name
+git worktree remove --force .worktrees/branch-name
 ```
