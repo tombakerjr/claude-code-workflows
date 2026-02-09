@@ -27,7 +27,8 @@ claude-code-pr-workflow/
 │   ├── pr-merge.md            # /pr-merge
 │   └── context-recovery.md    # /context-recovery
 ├── skills/                 # Workflow skills
-│   ├── subagent-driven-development/   # Execute implementation plans
+│   ├── agent-team-development/        # Parallel agent teams (preferred)
+│   ├── subagent-driven-development/   # Sequential subagent execution (fallback)
 │   ├── test-driven-development/       # TDD workflow
 │   ├── systematic-debugging/          # Debug root cause analysis
 │   ├── writing-plans/                 # Create implementation plans
@@ -37,6 +38,7 @@ claude-code-pr-workflow/
 │   ├── hooks.json             # Hook configuration
 │   ├── run-hook.cmd           # Cross-platform wrapper
 │   ├── git-guard.py           # PreToolUse: block main push
+│   ├── task-completed-gate.py # TaskCompleted: review gate for agent teams
 │   └── stop-check.sh          # Stop: warn on uncommitted
 ├── CLAUDE.md
 └── README.md
@@ -105,7 +107,8 @@ Skills provide structured workflows for common development tasks:
 - "Use dev-workflow:brainstorming" - Start design dialogue for new features
 - "Use dev-workflow:systematic-debugging" - Debug with root cause analysis
 - "Use dev-workflow:writing-plans" - Create implementation plan with tasks
-- "Use dev-workflow:subagent-driven-development" - Execute implementation plans with independent tasks
+- "Use dev-workflow:agent-team-development" - Execute plans with parallel agent teams (preferred, falls back to subagent-driven-development)
+- "Use dev-workflow:subagent-driven-development" - Execute implementation plans with sequential subagents (fallback)
 - "Use dev-workflow:test-driven-development" - TDD workflow with test-first approach
 - "Use dev-workflow:using-git-worktrees" - Isolated git worktrees for complex features
 
@@ -123,6 +126,7 @@ When compacting conversation history, preserve:
 - Git branch and last commit SHA
 - Any blockers or review feedback not yet addressed
 - PR number if one exists
+- Active teammate names and worktree paths (if using agent teams)
 
 Discard:
 - Full file contents (can re-read)
