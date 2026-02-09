@@ -5,7 +5,7 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 # Writing Implementation Plans
 
-Create structured plans that chain to subagent-driven-development for execution.
+Create structured plans that chain to agent-team-development (or subagent-driven-development) for execution.
 
 **Core principle:** Plan with bite-sized tasks, model recommendations, and TDD embedded.
 
@@ -26,7 +26,7 @@ Create structured plans that chain to subagent-driven-development for execution.
 ```markdown
 # Implementation Plan: [Feature/Component Name]
 
-**Skill:** `dev-workflow:subagent-driven-development`
+**Skill:** `dev-workflow:agent-team-development`
 
 ## Overview
 [1-2 sentences on what we're building and why]
@@ -40,6 +40,7 @@ Create structured plans that chain to subagent-driven-development for execution.
 ### Task 1.1: [Brief imperative title]
 **Model:** haiku | sonnet | opus
 **Complexity:** SIMPLE | STANDARD | COMPLEX
+**Parallelizable:** yes | no
 
 [Description of what to implement]
 
@@ -92,6 +93,7 @@ Choose model based on task complexity:
 ### Task 1.1: Add user authentication endpoint
 **Model:** sonnet
 **Complexity:** STANDARD
+**Parallelizable:** yes
 
 Create POST /auth/login endpoint that validates credentials and returns JWT token.
 
@@ -222,7 +224,7 @@ If dependencies exist:
 ```markdown
 # Implementation Plan: Add Health Check Endpoint
 
-**Skill:** `dev-workflow:subagent-driven-development`
+**Skill:** `dev-workflow:agent-team-development`
 
 ## Overview
 Add GET /health endpoint that returns service status and dependencies.
@@ -236,6 +238,7 @@ Add GET /health endpoint that returns service status and dependencies.
 ### Task 1.1: Create health check endpoint
 **Model:** haiku
 **Complexity:** SIMPLE
+**Parallelizable:** yes
 
 Add GET /health that returns 200 OK with JSON status.
 
@@ -251,6 +254,7 @@ Add GET /health that returns 200 OK with JSON status.
 ### Task 1.2: Add database health check
 **Model:** sonnet
 **Complexity:** STANDARD
+**Parallelizable:** no
 
 Extend health endpoint to check database connectivity.
 
@@ -270,6 +274,7 @@ Extend health endpoint to check database connectivity.
 ### Task 1.3: Add documentation
 **Model:** haiku
 **Complexity:** SIMPLE
+**Parallelizable:** yes
 
 Document the health check endpoint in API docs.
 
@@ -295,7 +300,7 @@ Document the health check endpoint in API docs.
 ```markdown
 # Implementation Plan: User Profile Management
 
-**Skill:** `dev-workflow:subagent-driven-development`
+**Skill:** `dev-workflow:agent-team-development`
 
 ## Overview
 Implement CRUD operations for user profiles with validation and permissions.
@@ -309,6 +314,7 @@ Implement CRUD operations for user profiles with validation and permissions.
 ### Task 1.1: Create profile data model
 **Model:** haiku
 **Complexity:** SIMPLE
+**Parallelizable:** yes
 
 Define TypeScript interface and database schema for user profiles.
 
@@ -324,6 +330,7 @@ Define TypeScript interface and database schema for user profiles.
 ### Task 1.2: Implement GET /profile/:id
 **Model:** sonnet
 **Complexity:** STANDARD
+**Parallelizable:** yes
 
 Create endpoint to fetch user profile by ID.
 
@@ -342,6 +349,7 @@ Create endpoint to fetch user profile by ID.
 ### Task 1.3: Implement PUT /profile/:id
 **Model:** sonnet
 **Complexity:** STANDARD
+**Parallelizable:** yes
 
 Create endpoint to update user profile with permission checks.
 
@@ -366,6 +374,7 @@ Create endpoint to update user profile with permission checks.
 ### Task 2.1: Add profile picture upload
 **Model:** sonnet
 **Complexity:** STANDARD
+**Parallelizable:** yes
 
 Allow users to upload profile pictures with validation.
 
@@ -388,6 +397,7 @@ Allow users to upload profile pictures with validation.
 ### Task 2.2: Add profile search
 **Model:** sonnet
 **Complexity:** STANDARD
+**Parallelizable:** yes
 
 Create endpoint to search profiles by name or email.
 
@@ -420,7 +430,8 @@ Create endpoint to search profiles by name or email.
 ## Integration
 
 **Creates plans for:**
-- `dev-workflow:subagent-driven-development` - executes the plan
+- `dev-workflow:agent-team-development` - preferred execution (parallel agent teams)
+- `dev-workflow:subagent-driven-development` - fallback execution (sequential subagents)
 
 **Works with:**
 - `dev-workflow:brainstorming` - use before planning if requirements unclear
@@ -432,21 +443,24 @@ Create endpoint to search profiles by name or email.
 ✅ Plan has clear phases and bite-sized tasks
 ✅ Every task specifies model (haiku/sonnet/opus)
 ✅ Every task classified by complexity (SIMPLE/STANDARD/COMPLEX)
+✅ Every task specifies parallelizable (yes/no)
 ✅ Tasks that write code include testing approach
 ✅ Acceptance criteria are specific and testable
 ✅ Review checkpoints identified
-✅ Plan chains to subagent-driven-development for execution
+✅ Plan chains to agent-team-development for execution
 
 ## Chains To
 
 After writing plan, invoke:
 ```
-/skill dev-workflow:subagent-driven-development
+/skill dev-workflow:agent-team-development
 ```
+
+This will automatically fall back to `subagent-driven-development` if agent teams are not enabled.
 
 The execution skill will:
 1. Read this plan
 2. Extract all tasks with model recommendations
-3. Dispatch implementer per task (using recommended model)
+3. Set up parallel implementers (or sequential subagents for fallback)
 4. Run verification and reviews at specified checkpoints
 5. Complete implementation following the plan structure

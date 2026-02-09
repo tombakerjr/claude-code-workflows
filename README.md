@@ -5,7 +5,8 @@ A comprehensive Claude Code plugin for feature development, bug fixes, and PR wo
 ## Features
 
 - **Upfront planning** - Brainstorming and structured implementation plans before code
-- **Subagent execution** - Parallelized work with fresh context per task
+- **Agent team execution** - True parallel implementation with multiple agents, dedicated reviewer, and mailbox communication
+- **Subagent execution** - Sequential execution with fresh context per task (fallback)
 - **Git worktree support** - Isolated workspaces for parallel development
 - **Pre-commit verification** - Type checking, security scans, debug code detection
 - **PR merge checklist** - CI verification, delayed comment detection, blocker scanning
@@ -20,17 +21,24 @@ This plugin enforces three core principles:
 ### 1. Planning Before Implementation
 Features start with **brainstorming** (Socratic exploration of requirements and design), followed by **writing plans** that break work into bite-sized, verifiable tasks. This catches issues early and provides clear success criteria.
 
-### 2. Subagents for Context Hygiene
-Implementation uses **subagent-driven development** where:
+### 2. Agent Teams for True Parallelism
+When agent teams are enabled, **agent-team-development** provides:
+- Multiple implementers working simultaneously in separate git worktrees
+- Dedicated reviewer communicating feedback directly via mailbox
+- Lead coordinator in delegate mode for orchestration-only
+- Automatic fallback to subagent-driven-development when teams aren't available
+
+### 3. Subagents for Context Hygiene
+**Subagent-driven development** (fallback) provides:
 - Main conversation stays clean (planning and orchestration)
 - Each task gets fresh context (implementer subagent reads files it needs)
 - Prevents context bloat from 50k+ token file dumps
 - Enables independent work verification
 
-### 3. Parallelization Through Isolation
-**Git worktrees** + subagents enable true parallel development:
+### 4. Parallelization Through Isolation
+**Git worktrees** + agents enable true parallel development:
 - Multiple features/experiments in isolated workspaces
-- Subagents work independently without blocking
+- Agents work independently without blocking
 - Easy cleanup (delete worktree, no branch pollution)
 
 ## Complete Development Workflow
@@ -44,9 +52,13 @@ flowchart TD
         D --> E[Create isolated workspace]
         E --> F[Writing-plans skill]
         F --> G["Break into tasks with acceptance criteria"]
-        G --> H[Subagent-driven-development skill]
-        H --> I["Parallel execution with fresh context"]
-        I --> J["/pr-create"]
+        G --> H{Agent teams enabled?}
+        H -->|Yes| I1[Agent-team-development skill]
+        I1 --> I2["Parallel implementers + reviewer in worktrees"]
+        H -->|No| I3[Subagent-driven-development skill]
+        I3 --> I4["Sequential execution with fresh context"]
+        I2 --> J["/pr-create"]
+        I4 --> J
         J --> K[PR ready]
     end
 
@@ -84,7 +96,7 @@ flowchart TD
 | **1. Design** | `brainstorming` | Socratic exploration of requirements and design trade-offs |
 | **2. Isolate** | `using-git-worktrees` | Create isolated workspace (optional, for parallel work) |
 | **3. Plan** | `writing-plans` | Break feature into bite-sized tasks with acceptance criteria |
-| **4. Execute** | `subagent-driven-development` | Parallel execution with fresh context per task |
+| **4. Execute** | `agent-team-development` | Parallel agent teams (falls back to `subagent-driven-development`) |
 | **5. PR** | `/pr-create` | Typecheck, push, create PR |
 | **6. Merge** | `/pr-merge` | Full checklist with delayed comment detection |
 
@@ -112,10 +124,11 @@ The plugin prevents common mistakes:
 
 When executing implementation plans (from `writing-plans` or similar), this plugin enforces:
 
-- **Use**: `dev-workflow:subagent-driven-development`
+- **Preferred**: `dev-workflow:agent-team-development` - parallel agent teams with worktree isolation
+- **Fallback**: `dev-workflow:subagent-driven-development` - sequential subagents (when agent teams not enabled)
 - **Not**: Alternative execution methods that cause context bloat
 
-Subagent-driven development keeps work in the current session with fresh context per task, avoiding context bloat from long-running executions.
+Agent-team-development automatically detects whether agent teams are enabled and falls back to subagent-driven-development when they aren't.
 
 ## Installation
 
@@ -165,7 +178,8 @@ Then restart Claude Code.
 
 | Skill | Description |
 |-------|-------------|
-| `subagent-driven-development` | Execute implementation plans with parallel subagents and fresh context |
+| `agent-team-development` | Execute plans with parallel agent teams, dedicated reviewer, and worktree isolation (preferred) |
+| `subagent-driven-development` | Execute implementation plans with sequential subagents and fresh context (fallback) |
 | `test-driven-development` | Red-green-refactor discipline for features and bug fixes |
 | `systematic-debugging` | 4-phase root cause analysis: gather, hypothesize, verify, fix |
 | `writing-plans` | Create bite-sized task plans with acceptance criteria |
@@ -177,8 +191,9 @@ Then restart Claude Code.
 | Hook | Event | Function |
 |------|-------|----------|
 | `git-guard.py` | PreToolUse:Bash | Blocks commits on main/master, blocks push to main/master, warns on raw `gh pr merge` |
+| `task-completed-gate.py` | TaskCompleted | Prevents implementation tasks from being marked complete before review |
 | `stop-check.sh` | Stop | Warns about uncommitted changes, open PRs, changes on main |
-| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use subagent-driven-development) |
+| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use agent-team-development) |
 
 ## The Merge Checklist
 
