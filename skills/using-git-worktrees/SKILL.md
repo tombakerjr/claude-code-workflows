@@ -14,7 +14,7 @@ When running multiple implementer agents in parallel or executing implementation
 ## When to Use This Skill
 
 **Always use for:**
-- Executing implementation plans with `dev-workflow:subagent-driven-development`
+- Executing implementation plans with `dev-workflow:agent-team-development` (or `subagent-driven-development` fallback)
 - Running multiple implementer agents in parallel
 - Starting feature work that needs isolation from main workspace
 - Working on multiple features simultaneously without switching branches
@@ -223,6 +223,11 @@ cd /home/tbaker/workspace/claude-code-workflows
 - Set up worktree first for isolated workspace
 - Then invoke writing-plans in the worktree context
 - Implementation plan executes in clean, isolated environment
+
+**Works with `dev-workflow:agent-team-development`:**
+- Agent teams create per-implementer worktrees automatically
+- Provides true parallel execution with worktree isolation
+- Reviewer and implementers communicate via mailbox
 
 **Works with `dev-workflow:subagent-driven-development`:**
 - Worktree provides isolated workspace for plan execution

@@ -10,29 +10,32 @@ If so, it blocks completion with a message directing review.
 Usage: Configure in hooks/hooks.json as a TaskCompleted hook.
 """
 import json
+import os
 import sys
 import re
 
 
-# Patterns indicating an implementation task (case-insensitive)
+# Patterns indicating an implementation task (matched against lowercased text)
 IMPL_PATTERNS = [
     r'\b(implement|create|add|build|write|update|refactor|fix|migrate)\b',
     r'\btask\s+\d+\.\d+\b',
 ]
 
-# Patterns indicating a review/meta task (not subject to review gate)
+# Patterns indicating the task is primarily a review/meta task (not subject to review gate)
+# These are narrow to avoid false negatives on implementation tasks containing "check" etc.
 REVIEW_PATTERNS = [
-    r'\b(review|verify|check|inspect|audit|approve)\b',
+    r'^review\b',
+    r'\breview\s+(this|the|task|code|changes|implementation)\b',
     r'\bready\s+for\s+review\b',
-    r'\breview(ed|er)\b',
-    r'\b(meta|setup|cleanup|housekeeping)\b',
+    r'^(meta|setup|cleanup|housekeeping)\b',
+    r'\b(spec|quality|staff)\s+review\b',
 ]
 
-# Patterns indicating task has already been reviewed
+# Patterns indicating task has already been reviewed (matched against lowercased text)
 REVIEWED_INDICATORS = [
     r'\breviewed\b',
     r'\bapproved\b',
-    r'\bPASS\b',
+    r'\bpass\b',
     r'\breview\s+passed\b',
 ]
 
@@ -41,14 +44,15 @@ def is_implementation_task(subject, description):
     """Check if the task looks like an implementation task."""
     text = f"{subject} {description}".lower()
 
-    # Check if it matches review/meta patterns first (exclude from gate)
+    # Check if subject primarily matches review/meta patterns (exclude from gate)
+    subject_lower = subject.lower()
     for pattern in REVIEW_PATTERNS:
-        if re.search(pattern, text, re.IGNORECASE):
+        if re.search(pattern, subject_lower):
             return False
 
     # Check if it matches implementation patterns
     for pattern in IMPL_PATTERNS:
-        if re.search(pattern, text, re.IGNORECASE):
+        if re.search(pattern, text):
             return True
 
     return False
@@ -59,13 +63,17 @@ def is_already_reviewed(subject, description):
     text = f"{subject} {description}".lower()
 
     for pattern in REVIEWED_INDICATORS:
-        if re.search(pattern, text, re.IGNORECASE):
+        if re.search(pattern, text):
             return True
 
     return False
 
 
 def main():
+    # Only enforce review gate when agent teams are active
+    if not os.environ.get("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"):
+        sys.exit(0)
+
     try:
         input_data = json.load(sys.stdin)
     except (json.JSONDecodeError, IOError):

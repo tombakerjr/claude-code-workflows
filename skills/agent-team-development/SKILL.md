@@ -84,8 +84,8 @@ WORKTREE SETUP
      ../my-app-team-feature-auth-impl-3
 
    Commands:
-     git worktree add ../REPO-team-BRANCH-impl-1 feature/BRANCH
-     git worktree add ../REPO-team-BRANCH-impl-2 feature/BRANCH
+     git worktree add ../REPO-team-BRANCH-impl-1 HEAD
+     git worktree add ../REPO-team-BRANCH-impl-2 HEAD
      ...
 
 DELEGATE MODE
@@ -286,7 +286,7 @@ Options:
 
 ```bash
 # Get repo name and branch for naming
-REPO_NAME=$(basename $(git rev-parse --show-toplevel))
+REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
 BRANCH_NAME=$(git branch --show-current | tr '/' '-')
 
 # Create worktrees
