@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.2.0...v2.3.0) (2026-02-09)
+
+
+### Features
+
+* add agent-team-development skill with parallel execution ([#8](https://github.com/tombakerjr/claude-code-workflows/issues/8)) ([79c4c05](https://github.com/tombakerjr/claude-code-workflows/commit/79c4c05d3dd1f66f1a36fd57240e362354af1253))
+
 ## [2.2.0](https://github.com/tombakerjr/claude-code-pr-workflow/compare/v2.1.0...v2.2.0) (2026-01-27)
 
 
