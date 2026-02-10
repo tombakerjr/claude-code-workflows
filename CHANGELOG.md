@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/tombakerjr/claude-code-workflows/compare/v2.3.0...v2.3.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* worktree support with .worktrees/ convention and cd-first approach ([#10](https://github.com/tombakerjr/claude-code-workflows/issues/10)) ([0dbb03b](https://github.com/tombakerjr/claude-code-workflows/commit/0dbb03b05f99cc698ea4c980b4110b96193801d2))
+
 ## [2.3.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.2.0...v2.3.0) (2026-02-09)
 
 
