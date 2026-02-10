@@ -79,17 +79,19 @@ git worktree add .worktrees/feature-auth feature-auth
 
 ### Phase 3: Verify Worktree
 
-**Verify worktree state (use `git -C` from the main repo):**
+**Navigate into worktree and verify state:**
 
 ```bash
-# Confirm branch and clean state in the worktree
-git -C .worktrees/feature-auth status
+cd .worktrees/feature-auth
 
-# Verify worktree list
+# Confirm branch and clean state
+git status
+
+# Verify worktree list (works from any worktree)
 git worktree list
 ```
 
-**Checkpoint:** Worktree exists. Branch is correct. State is clean.
+**Checkpoint:** In worktree directory. Branch is correct. State is clean.
 
 ### Phase 4: Chain to Implementation Planning
 
@@ -173,12 +175,15 @@ git worktree remove --force .worktrees/branch-name
 ### Working in Worktrees
 
 ```bash
-# Use git -C to run commands in worktree from the main repo
-git -C .worktrees/branch-name status
-git -C .worktrees/branch-name add .
-git -C .worktrees/branch-name commit -m "feat: implement feature"
-git -C .worktrees/branch-name push origin branch-name
+# Work from inside the worktree directory
+cd .worktrees/branch-name
+git status
+git add .
+git commit -m "feat: implement feature"
+git push origin branch-name
 ```
+
+**Note:** Prefer working from within the worktree. Use `git -C .worktrees/branch-name` only as a fallback (e.g., from the lead orchestrator when agents are unavailable).
 
 ## Process Flow
 
@@ -188,7 +193,7 @@ git -C .worktrees/branch-name push origin branch-name
 2. **Check branch availability** - `git branch -a | grep feature-name` is empty
 3. **Create feature branch** - `git branch feature-name`
 4. **Create worktree** - `git worktree add .worktrees/feature-name feature-name`
-5. **Verify worktree** - `git -C .worktrees/feature-name status`, `git worktree list`
+5. **Navigate to worktree** - `cd .worktrees/feature-name`, verify with `git status`
 6. **Chain to writing-plans** - Ready for implementation planning
 
 ### Verification at Each Phase
@@ -261,14 +266,15 @@ $ git worktree list
   → /home/user/project [main]
   → /home/user/project/.worktrees/feature-auth [feature-auth]
 
-Phase 3 - VERIFY
-$ git -C .worktrees/feature-auth status
+Phase 3 - NAVIGATE & VERIFY
+$ cd .worktrees/feature-auth
+$ git status
   → On branch feature-auth, nothing to commit, working tree clean ✓
 
 Phase 4 - CHAIN TO PLANNING
 → Invoke dev-workflow:writing-plans
 → Create implementation plan for authentication feature
-→ Plan executes in isolated worktree (use git -C .worktrees/feature-auth ...)
+→ Plan executes in isolated worktree directory
 → No conflicts with main workspace
 
 Phase 5 - CLEANUP (after merge)
@@ -337,9 +343,10 @@ rm -rf .worktrees/branch-name
 ### "Cannot remove worktree with uncommitted changes"
 
 ```bash
-# Option 1: Commit or stash changes in the worktree
-git -C .worktrees/branch-name add .
-git -C .worktrees/branch-name commit -m "WIP: save work"
+# Option 1: Commit or stash changes from within the worktree
+cd .worktrees/branch-name
+git add .
+git commit -m "WIP: save work"
 
 # Option 2: Force remove (loses changes)
 git worktree remove --force .worktrees/branch-name
