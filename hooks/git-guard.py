@@ -16,12 +16,24 @@ import re
 import subprocess
 
 
-def get_current_branch():
-    """Get current git branch name."""
+def parse_git_c_path(command):
+    """Extract the -C <path> argument from a git command, if present."""
+    # Handle both quoted and unquoted paths: git -C "path with spaces" or git -C path
+    match = re.search(r'git\s+-C\s+(?:"([^"]+)"|(\S+))', command)
+    if match:
+        return match.group(1) if match.group(1) else match.group(2)
+    return None
+
+
+def get_current_branch(cwd=None):
+    """Get current git branch name, optionally for a specific directory."""
     try:
+        cmd = ["git"]
+        if cwd:
+            cmd += ["-C", cwd]
+        cmd += ["rev-parse", "--abbrev-ref", "HEAD"]
         result = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, timeout=5
+            cmd, capture_output=True, text=True, timeout=5
         )
         return result.stdout.strip() if result.returncode == 0 else None
     except Exception:
@@ -53,8 +65,11 @@ def main():
             sys.exit(2)
 
     # Block commits on main/master branch
-    if re.search(r'git\s+commit', command):
-        branch = get_current_branch()
+    # Match git commit at the start of the command or after shell operators (&&, ;, |)
+    # but NOT inside heredocs or string arguments (no re.MULTILINE — ^ only matches string start)
+    if re.search(r'(?:^|&&|;|\|)\s*git\s+(-C\s+(?:"[^"]+"|(\S+))\s+)?commit', command):
+        worktree_path = parse_git_c_path(command)
+        branch = get_current_branch(cwd=worktree_path)
         if branch in ["main", "master"]:
             print("❌ BLOCKED: Cannot commit directly to main/master branch", file=sys.stderr)
             print("", file=sys.stderr)

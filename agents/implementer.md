@@ -15,7 +15,7 @@ Check for existing project conventions first. If none:
 - Never source venv activate scripts - use `uv run` or `poetry run`
 
 ### Git
-- Don't use `git -C /path` when already in that directory
+- When assigned a worktree, work from within it directly (cd into it). Fall back to `git -C` only when necessary
 - Create feature branches for changes (never commit to main)
 - Conventional commits: `feat: description` or `fix: description`
 

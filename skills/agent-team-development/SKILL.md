@@ -76,17 +76,19 @@ SETUP
 WORKTREE SETUP
 ======================================================================
 5. Create git worktrees for each implementer:
-   Pattern: ../REPO-team-BRANCH-impl-N
+   Pattern: .worktrees/team-BRANCH-impl-N
 
-   Example for repo "my-app" on branch "feature/auth":
-     ../my-app-team-feature-auth-impl-1
-     ../my-app-team-feature-auth-impl-2
-     ../my-app-team-feature-auth-impl-3
+   Example for branch "feature/auth":
+     .worktrees/team-feature-auth-impl-1
+     .worktrees/team-feature-auth-impl-2
+     .worktrees/team-feature-auth-impl-3
 
    Commands:
-     git worktree add ../REPO-team-BRANCH-impl-1 HEAD
-     git worktree add ../REPO-team-BRANCH-impl-2 HEAD
+     git worktree add .worktrees/team-feature-auth-impl-1 HEAD
+     git worktree add .worktrees/team-feature-auth-impl-2 HEAD
      ...
+
+   Ensure `.worktrees/` is in `.gitignore`.
 
 DELEGATE MODE
 ======================================================================
@@ -151,9 +153,10 @@ FINAL
 ======================================================================
 17. Lead performs final staff-code-reviewer (opus) on entire implementation
 18. Clean up worktrees:
-    git worktree remove ../REPO-team-BRANCH-impl-1
-    git worktree remove ../REPO-team-BRANCH-impl-2
+    git worktree remove .worktrees/team-BRANCH-impl-1
+    git worktree remove .worktrees/team-BRANCH-impl-2
     ...
+    git worktree prune
 19. Create PR (follow repo template if exists)
 20. Invoke /pr-merge workflow (or user invokes manually)
 ```
@@ -170,20 +173,26 @@ from the shared task list, implement them, and commit your work.
 Working directory: [WORKTREE_PATH]
 Feature branch: [BRANCH_NAME]
 
+IMPORTANT: cd into your worktree directory and work from there.
+All git and file operations should happen from within the worktree.
+Only fall back to `git -C` if you cannot cd into the worktree.
+
 ## Workflow
-1. Check the shared task list for unclaimed tasks
-2. Claim a task by marking it in_progress
-3. Before starting: git pull to get latest changes
-4. Implement the task following its acceptance criteria
-5. Run tests and verify your changes
-6. Commit with conventional message: feat|fix|refactor: description
-7. Push to remote: git push
-8. Mark the task as ready for review (add "READY FOR REVIEW" to task)
-9. Wait for reviewer feedback via mailbox
-10. If reviewer requests fixes: fix, commit, push, notify reviewer
-11. Once approved: move to next task
+1. cd into your worktree: cd [WORKTREE_PATH]
+2. Check the shared task list for unclaimed tasks
+3. Claim a task by marking it in_progress
+4. Before starting: git pull to get latest changes
+5. Implement the task following its acceptance criteria
+6. Run tests and verify your changes
+7. Commit with conventional message: feat|fix|refactor: description
+8. Push to remote: git push
+9. Mark the task as ready for review (add "READY FOR REVIEW" to task)
+10. Wait for reviewer feedback via mailbox
+11. If reviewer requests fixes: fix, commit, push, notify reviewer
+12. Once approved: move to next task
 
 ## Guidelines
+- Work from within your worktree directory (cd into it first)
 - Follow project conventions from CLAUDE.md
 - Write tests as specified in the task's testing approach
 - Keep commits focused on the task
@@ -285,21 +294,22 @@ Options:
 ### Creation (during setup)
 
 ```bash
-# Get repo name and branch for naming
-REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
+# Get branch name for worktree naming
 BRANCH_NAME=$(git branch --show-current | tr '/' '-')
 
-# Create worktrees
-git worktree add "../${REPO_NAME}-team-${BRANCH_NAME}-impl-1" HEAD
-git worktree add "../${REPO_NAME}-team-${BRANCH_NAME}-impl-2" HEAD
+# Create worktrees inside .worktrees/
+git worktree add ".worktrees/team-${BRANCH_NAME}-impl-1" HEAD
+git worktree add ".worktrees/team-${BRANCH_NAME}-impl-2" HEAD
 # Add impl-3 if 5+ tasks
+
+# Ensure .worktrees/ is in .gitignore
 ```
 
 ### Cleanup (during final)
 
 ```bash
-git worktree remove "../${REPO_NAME}-team-${BRANCH_NAME}-impl-1"
-git worktree remove "../${REPO_NAME}-team-${BRANCH_NAME}-impl-2"
+git worktree remove ".worktrees/team-${BRANCH_NAME}-impl-1"
+git worktree remove ".worktrees/team-${BRANCH_NAME}-impl-2"
 # Remove impl-3 if it exists
 git worktree prune
 ```
