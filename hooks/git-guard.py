@@ -18,8 +18,11 @@ import subprocess
 
 def parse_git_c_path(command):
     """Extract the -C <path> argument from a git command, if present."""
-    match = re.search(r'git\s+-C\s+(\S+)', command)
-    return match.group(1) if match else None
+    # Handle both quoted and unquoted paths: git -C "path with spaces" or git -C path
+    match = re.search(r'git\s+-C\s+(?:"([^"]+)"|(\S+))', command)
+    if match:
+        return match.group(1) if match.group(1) else match.group(2)
+    return None
 
 
 def get_current_branch(cwd=None):
@@ -62,9 +65,9 @@ def main():
             sys.exit(2)
 
     # Block commits on main/master branch
-    # Only match "git commit" or "git -C <path> commit" at the command level,
-    # not inside heredocs or string arguments
-    if re.search(r'^\s*git\s+(-C\s+\S+\s+)?commit', command, re.MULTILINE):
+    # Match git commit at the start of the command or after shell operators (&&, ;, |)
+    # but NOT inside heredocs or string arguments (no re.MULTILINE — ^ only matches string start)
+    if re.search(r'(?:^|&&|;|\|)\s*git\s+(-C\s+(?:"[^"]+"|(\S+))\s+)?commit', command):
         worktree_path = parse_git_c_path(command)
         branch = get_current_branch(cwd=worktree_path)
         if branch in ["main", "master"]:
