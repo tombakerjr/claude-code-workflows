@@ -37,7 +37,22 @@ Push the current branch to origin:
 git push -u origin $(git branch --show-current)
 ```
 
-## Step 5: Create PR
+## Step 5: Check for Existing PR
+
+Check if a PR already exists for this branch:
+
+```bash
+EXISTING_PR=$(gh pr list --head "$(git branch --show-current)" --json number,url --jq '.[0]' 2>/dev/null || true)
+```
+
+If a PR exists, report it and skip creation:
+```
+PR already exists: #<number> — <url>
+```
+
+Otherwise, continue to Step 6.
+
+## Step 6: Create PR
 
 Construct PR with:
 - Title: Brief description of changes
@@ -65,12 +80,13 @@ Create the PR:
 gh pr create --title "TITLE" --body "BODY"
 ```
 
-## Step 6: Confirm
+## Step 7: Confirm
 
-!`gh pr view --json number,url -q '"PR #\(.number): \(.url)"'`
+```bash
+gh pr list --head "$(git branch --show-current)" --json number,url --jq '"PR #\(.[0].number): \(.[0].url)"'
+```
 
 ## Next Steps
 
-- Wait for CI to complete
-- Use `/pr-status` to check CI and comments
+- Use `/pr-status` to watch CI and review comments
 - Use `/pr-merge` when ready to merge
