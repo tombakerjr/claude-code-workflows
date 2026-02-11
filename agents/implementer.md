@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implementation agent with tooling conventions. Use for task implementation in subagent-driven-development workflow.
+description: Implementation agent with tooling conventions. Use for task implementation in plan-execution workflow (subagent mode).
 model: sonnet
 ---
 

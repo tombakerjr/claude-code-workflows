@@ -25,8 +25,7 @@ claude-code-pr-workflow/
 │   ├── pr-status.md           # /pr-status
 │   └── context-recovery.md    # /context-recovery
 ├── skills/                 # Workflow skills
-│   ├── agent-team-development/        # Parallel agent teams (preferred)
-│   ├── subagent-driven-development/   # Sequential subagent execution (fallback)
+│   ├── plan-execution/                # Execute plans (agent teams or subagents)
 │   ├── test-driven-development/       # TDD workflow
 │   ├── systematic-debugging/          # Debug root cause analysis
 │   ├── writing-plans/                 # Create implementation plans
@@ -88,7 +87,7 @@ The `/pr-status` command enforces:
 3. **Read and assess** - Check for CRITICAL, FIX, BLOCKER, DO NOT MERGE
 4. **Never report ready without the comment** - The review always posts; wait for it
 
-The review bot posts 10-12 seconds after CI completes. `/pr-status` handles this automatically by polling with timestamp validation. The execution skills (`agent-team-development`, `subagent-driven-development`) use `/pr-status` in a loop: check status, fix if needed, push, re-check until READY TO MERGE.
+The review bot posts 10-12 seconds after CI completes. `/pr-status` handles this automatically by polling with timestamp validation. The `plan-execution` skill uses `/pr-status` in a loop: check status, fix if needed, push, re-check until READY TO MERGE.
 
 ### Agent Invocation
 
@@ -103,8 +102,7 @@ Skills provide structured workflows for common development tasks:
 - "Use dev-workflow:brainstorming" - Start design dialogue for new features
 - "Use dev-workflow:systematic-debugging" - Debug with root cause analysis
 - "Use dev-workflow:writing-plans" - Create implementation plan with tasks
-- "Use dev-workflow:agent-team-development" - Execute plans with parallel agent teams (preferred, falls back to subagent-driven-development)
-- "Use dev-workflow:subagent-driven-development" - Execute implementation plans with sequential subagents (fallback)
+- "Use dev-workflow:plan-execution" - Execute plans with agent teams or subagents (auto-selects based on availability)
 - "Use dev-workflow:test-driven-development" - TDD workflow with test-first approach
 - "Use dev-workflow:using-git-worktrees" - Isolated git worktrees for complex features
 
