@@ -5,7 +5,7 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 # Writing Implementation Plans
 
-Create structured plans that chain to agent-team-development (or subagent-driven-development) for execution.
+Create structured plans that chain to plan-execution for execution.
 
 **Core principle:** Plan with bite-sized tasks, model recommendations, and TDD embedded.
 
@@ -26,7 +26,7 @@ Create structured plans that chain to agent-team-development (or subagent-driven
 ```markdown
 # Implementation Plan: [Feature/Component Name]
 
-**Skill:** `dev-workflow:agent-team-development`
+**Skill:** `dev-workflow:plan-execution`
 
 ## Overview
 [1-2 sentences on what we're building and why]
@@ -224,7 +224,7 @@ If dependencies exist:
 ```markdown
 # Implementation Plan: Add Health Check Endpoint
 
-**Skill:** `dev-workflow:agent-team-development`
+**Skill:** `dev-workflow:plan-execution`
 
 ## Overview
 Add GET /health endpoint that returns service status and dependencies.
@@ -300,7 +300,7 @@ Document the health check endpoint in API docs.
 ```markdown
 # Implementation Plan: User Profile Management
 
-**Skill:** `dev-workflow:agent-team-development`
+**Skill:** `dev-workflow:plan-execution`
 
 ## Overview
 Implement CRUD operations for user profiles with validation and permissions.
@@ -430,8 +430,7 @@ Create endpoint to search profiles by name or email.
 ## Integration
 
 **Creates plans for:**
-- `dev-workflow:agent-team-development` - preferred execution (parallel agent teams)
-- `dev-workflow:subagent-driven-development` - fallback execution (sequential subagents)
+- `dev-workflow:plan-execution` - executes with agent teams or subagents based on availability
 
 **Works with:**
 - `dev-workflow:brainstorming` - use before planning if requirements unclear
@@ -447,20 +446,18 @@ Create endpoint to search profiles by name or email.
 ✅ Tasks that write code include testing approach
 ✅ Acceptance criteria are specific and testable
 ✅ Review checkpoints identified
-✅ Plan chains to agent-team-development for execution
+✅ Plan chains to plan-execution for execution
 
 ## Chains To
 
 After writing plan, invoke:
 ```
-/skill dev-workflow:agent-team-development
+/skill dev-workflow:plan-execution
 ```
 
-This will automatically fall back to `subagent-driven-development` if agent teams are not enabled.
-
 The execution skill will:
-1. Read this plan
-2. Extract all tasks with model recommendations
-3. Set up parallel implementers (or sequential subagents for fallback)
-4. Run verification and reviews at specified checkpoints
-5. Complete implementation following the plan structure
+1. Select mode (agent teams if enabled, subagents otherwise)
+2. Read this plan and extract all tasks with model recommendations
+3. Execute tasks in parallel with verification and review gates
+4. Run staff-code-reviewer at phase boundaries and final
+5. Create PR and run /pr-status loop until ready

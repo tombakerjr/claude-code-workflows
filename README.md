@@ -5,11 +5,10 @@ A comprehensive Claude Code plugin for feature development, bug fixes, and PR wo
 ## Features
 
 - **Upfront planning** - Brainstorming and structured implementation plans before code
-- **Agent team execution** - True parallel implementation with multiple agents, dedicated reviewer, and mailbox communication
-- **Subagent execution** - Sequential execution with fresh context per task (fallback)
+- **Plan execution** - Parallel implementation via agent teams (worktrees + mailbox) or subagents (`run_in_background`), auto-selected
 - **Git worktree support** - Isolated workspaces for parallel development
 - **Pre-commit verification** - Type checking, security scans, debug code detection
-- **PR merge checklist** - CI verification, delayed comment detection, blocker scanning
+- **PR readiness checks** - CI verification, review comment polling, blocker scanning
 - **Git guardrails** - Blocks direct pushes to main, warns on raw merge commands
 - **Code review agents** - Staff-level comprehensive reviews
 - **Context recovery** - Restore state after context compaction
@@ -21,21 +20,14 @@ This plugin enforces three core principles:
 ### 1. Planning Before Implementation
 Features start with **brainstorming** (Socratic exploration of requirements and design), followed by **writing plans** that break work into bite-sized, verifiable tasks. This catches issues early and provides clear success criteria.
 
-### 2. Agent Teams for True Parallelism
-When agent teams are enabled, **agent-team-development** provides:
-- Multiple implementers working simultaneously in separate git worktrees
-- Dedicated reviewer communicating feedback directly via mailbox
-- Lead coordinator in delegate mode for orchestration-only
-- Automatic fallback to subagent-driven-development when teams aren't available
+### 2. Parallel Execution with Mode Selection
+**Plan execution** automatically selects the best execution mode:
+- **Team mode** (when agent teams enabled): Multiple implementers in worktrees, dedicated reviewer with mailbox communication, lead in delegate mode
+- **Subagent mode** (default): Parallel dispatch via `run_in_background`, each subagent gets only what you pass it (lightweight context), independent model selection per task
 
-### 3. Subagents for Context Hygiene
-**Subagent-driven development** (fallback) provides:
-- Main conversation stays clean (planning and orchestration)
-- Each task gets fresh context (implementer subagent reads files it needs)
-- Prevents context bloat from 50k+ token file dumps
-- Enables independent work verification
+Subagent mode is more efficient for well-scoped tasks — subagents start fresh with just their prompt, avoiding full context loading overhead.
 
-### 4. Parallelization Through Isolation
+### 3. Parallelization Through Isolation
 **Git worktrees** + agents enable true parallel development:
 - Multiple features/experiments in isolated workspaces
 - Agents work independently without blocking
@@ -53,11 +45,11 @@ flowchart TD
         E --> F[Writing-plans skill]
         F --> G["Break into tasks with acceptance criteria"]
         G --> H{Agent teams enabled?}
-        H -->|Yes| I1[Agent-team-development skill]
+        H -->|Yes| I1["Plan-execution: team mode"]
         I1 --> I2["Parallel implementers + reviewer in worktrees"]
-        H -->|No| I3[Subagent-driven-development skill]
-        I3 --> I4["Sequential execution with fresh context"]
-        I2 --> J["/pr-create"]
+        H -->|No| I3["Plan-execution: subagent mode"]
+        I3 --> I4["Parallel dispatch with lightweight context"]
+        I2 --> J["Push + create PR"]
         I4 --> J
         J --> K[PR ready]
     end
@@ -68,7 +60,7 @@ flowchart TD
         N --> O[Test-driven-development skill]
         O --> P["Red → Green → Refactor"]
         P --> Q[Commit fix]
-        Q --> R["/pr-create"]
+        Q --> R["Push + create PR"]
         R --> K
     end
 
@@ -77,8 +69,8 @@ flowchart TD
         S --> T{Approved?}
         T -->|No| U[Address feedback]
         U --> S
-        T -->|Yes| V["/pr-merge"]
-        V --> W["Checklist: typecheck, CI, poll for review comment, scan"]
+        T -->|Yes| V["/pr-status"]
+        V --> W["Watch CI, find review comment, scan for blockers"]
         W --> X{Blockers?}
         X -->|Yes| U
         X -->|No| Y[Merge & cleanup]
@@ -96,9 +88,8 @@ flowchart TD
 | **1. Design** | `brainstorming` | Socratic exploration of requirements and design trade-offs |
 | **2. Isolate** | `using-git-worktrees` | Create isolated workspace (optional, for parallel work) |
 | **3. Plan** | `writing-plans` | Break feature into bite-sized tasks with acceptance criteria |
-| **4. Execute** | `agent-team-development` | Parallel agent teams (falls back to `subagent-driven-development`) |
-| **5. PR** | `/pr-create` | Typecheck, push, create PR |
-| **6. Merge** | `/pr-merge` | Full checklist with delayed comment detection |
+| **4. Execute** | `plan-execution` | Parallel via agent teams or subagents (auto-selected) |
+| **5. PR & Merge** | `/pr-status` | Watch CI, find review comment, fix loop until ready, merge |
 
 ### Bug Fix Path
 
@@ -107,8 +98,7 @@ flowchart TD
 | **1. Analyze** | `systematic-debugging` | 4-phase root cause analysis (gather, hypothesize, verify, fix) |
 | **2. Test** | `test-driven-development` | Red-green-refactor discipline |
 | **3. Commit** | N/A | Commit fix with conventional message |
-| **4. PR** | `/pr-create` | Create PR for review |
-| **5. Merge** | `/pr-merge` | Full merge checklist |
+| **4. PR & Merge** | `/pr-status` | Create PR, watch CI, review comment check, merge |
 
 ### Git Guards
 
@@ -118,17 +108,14 @@ The plugin prevents common mistakes:
 |--------|---------|-------------------|
 | `git commit` | Blocked | Allowed |
 | `git push origin main` | Blocked | N/A |
-| `gh pr merge` | Warned (use /pr-merge) | Warned (use /pr-merge) |
+| `gh pr merge` | Warned (run /pr-status first) | Warned (run /pr-status first) |
 
 ### Execution Preference
 
-When executing implementation plans (from `writing-plans` or similar), this plugin enforces:
+When executing implementation plans (from `writing-plans` or similar), use `dev-workflow:plan-execution`. It automatically selects the best mode:
 
-- **Preferred**: `dev-workflow:agent-team-development` - parallel agent teams with worktree isolation
-- **Fallback**: `dev-workflow:subagent-driven-development` - sequential subagents (when agent teams not enabled)
-- **Not**: Alternative execution methods that cause context bloat
-
-Agent-team-development automatically detects whether agent teams are enabled and falls back to subagent-driven-development when they aren't.
+- **Team mode** (agent teams enabled): parallel teammates in worktrees with mailbox communication
+- **Subagent mode** (default): parallel dispatch via `run_in_background` with lightweight context per task
 
 ## Installation
 
@@ -157,9 +144,7 @@ Then restart Claude Code.
 
 | Command | Description |
 |---------|-------------|
-| `/pr-create` | Verify branch, typecheck, push, create PR with template |
-| `/pr-status` | Quick CI + comments + blockers overview |
-| `/pr-merge` | **Full merge checklist** - never skip this |
+| `/pr-status` | **Watch CI, find review comment, scan for blockers, report readiness** |
 | `/context-recovery` | Recover git/PR state after context compaction |
 
 ### Agents
@@ -178,8 +163,7 @@ Then restart Claude Code.
 
 | Skill | Description |
 |-------|-------------|
-| `agent-team-development` | Execute plans with parallel agent teams, dedicated reviewer, and worktree isolation (preferred) |
-| `subagent-driven-development` | Execute implementation plans with sequential subagents and fresh context (fallback) |
+| `plan-execution` | Execute implementation plans — agent teams (worktrees + mailbox) or subagents (`run_in_background`), auto-selected |
 | `test-driven-development` | Red-green-refactor discipline for features and bug fixes |
 | `systematic-debugging` | 4-phase root cause analysis: gather, hypothesize, verify, fix |
 | `writing-plans` | Create bite-sized task plans with acceptance criteria |
@@ -193,38 +177,31 @@ Then restart Claude Code.
 | `git-guard.py` | PreToolUse:Bash | Blocks commits on main/master, blocks push to main/master, warns on raw `gh pr merge` |
 | `task-completed-gate.py` | TaskCompleted | Prevents implementation tasks from being marked complete before review |
 | `stop-check.sh` | Stop | Warns about uncommitted changes, open PRs, changes on main |
-| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use agent-team-development) |
+| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use plan-execution) |
 
-## The Merge Checklist
+## The PR Readiness Check
 
-The `/pr-merge` command enforces this critical workflow:
+The `/pr-status` command enforces this critical workflow:
 
-1. **Typecheck** - Catch type errors before merge
-2. **CI passes** - Use `gh pr checks --watch` to wait for completion
-3. **Poll for review comment** - Claude review ALWAYS posts a comment
-4. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
-5. **Only merge when clear** - Human verification required
+1. **CI passes** — Watch all checks to completion with `gh pr checks --watch`
+2. **Find the review comment** — Poll until the review bot's comment from the current CI run is found
+3. **Read and assess** — Check for CRITICAL, FIX, BLOCKER, DO NOT MERGE
+4. **Report verdict** — READY TO MERGE or CHANGES NEEDED with specifics
 
-**Why poll for the review comment?** Claude code review ALWAYS posts a comment (either approving or requesting fixes). The absence of this comment is NOT tacit approval - we poll until found to ensure no review feedback is missed.
+**Why poll for the review comment?** The review workflow ALWAYS posts a comment (either approving or requesting changes). The absence of this comment is NOT tacit approval — `/pr-status` polls with timestamp validation to ensure no review feedback is missed.
 
 ## Usage Examples
 
-### Creating a PR
+### Checking PR Readiness
 ```
-> Create a PR for my changes
-# Claude runs /pr-create, which typechecks and creates PR
-```
-
-### Checking PR Status
-```
-> What's the status of my PR?
-# Claude runs /pr-status
+> Is my PR ready to merge?
+# Claude runs /pr-status — watches CI, finds review comment, reports verdict
 ```
 
 ### Merging a PR
 ```
 > Merge my PR
-# Claude runs /pr-merge with full checklist
+# Claude runs /pr-status first, then merges if READY TO MERGE
 ```
 
 ### Code Review
@@ -240,13 +217,6 @@ The `/pr-merge` command enforces this critical workflow:
 ```
 
 ## Customization
-
-### Typecheck Commands
-
-Commands default to trying `pnpm run typecheck || npm run typecheck || yarn typecheck`. Edit the commands to match your project:
-
-- `commands/pr-create.md`
-- `commands/pr-merge.md`
 
 ### Review Criteria
 

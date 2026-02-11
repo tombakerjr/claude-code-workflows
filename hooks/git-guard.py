@@ -6,7 +6,7 @@ Blocks dangerous git operations and warns on PR merges.
 This hook scans bash commands and:
 1. BLOCKS direct pushes to main/master branches
 2. BLOCKS commits when on main/master branch
-3. WARNS when using raw `gh pr merge` (recommends /pr-merge command)
+3. WARNS when using raw `gh pr merge` (recommends running /pr-status first)
 
 Usage: Configure in hooks/hooks.json
 """
@@ -79,18 +79,18 @@ def main():
             print("Or use /feature-start if available", file=sys.stderr)
             sys.exit(2)
 
-    # Warn on gh pr merge without using /pr-merge command
+    # Warn on gh pr merge without running /pr-status first
     if re.search(r'gh\s+pr\s+merge', command):
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "additionalContext": (
-                    "WARNING: You are merging a PR. Did you complete the checklist?\n"
+                    "WARNING: You are merging a PR. Did you run /pr-status first?\n"
                     "1) Wait for CI to pass\n"
-                    "2) Wait 10-12 seconds for delayed review comments\n"
-                    "3) Fetch and review all comments\n"
-                    "4) Address any blockers (CRITICAL, FIX, BLOCKER)\n"
-                    "Consider using /pr-merge command instead for safe merging."
+                    "2) Wait for the review comment from the current CI run\n"
+                    "3) Read and assess all comments for blockers\n"
+                    "4) Only merge when /pr-status reports READY TO MERGE\n"
+                    "Run /pr-status before merging."
                 )
             }
         }

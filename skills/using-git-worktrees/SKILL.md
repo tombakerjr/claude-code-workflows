@@ -14,7 +14,7 @@ When running multiple implementer agents in parallel or executing implementation
 ## When to Use This Skill
 
 **Always use for:**
-- Executing implementation plans with `dev-workflow:agent-team-development` (or `subagent-driven-development` fallback)
+- Executing implementation plans with `dev-workflow:plan-execution`
 - Running multiple implementer agents in parallel
 - Starting feature work that needs isolation from main workspace
 - Working on multiple features simultaneously without switching branches
@@ -210,15 +210,10 @@ git push origin branch-name
 - Then invoke writing-plans in the worktree context
 - Implementation plan executes in clean, isolated environment
 
-**Works with `dev-workflow:agent-team-development`:**
-- Agent teams create per-implementer worktrees automatically
-- Provides true parallel execution with worktree isolation
-- Reviewer and implementers communicate via mailbox
-
-**Works with `dev-workflow:subagent-driven-development`:**
-- Worktree provides isolated workspace for plan execution
-- Prevents git index conflicts between parallel implementers
-- Each task in plan works in same worktree context
+**Works with `dev-workflow:plan-execution`:**
+- Team mode creates per-implementer worktrees automatically
+- Subagent mode can use a worktree as isolated workspace
+- Prevents git index conflicts between parallel workers
 
 **Works with `dev-workflow:implementer`:**
 - Implementer agents work in dedicated worktree
