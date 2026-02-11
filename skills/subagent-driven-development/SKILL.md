@@ -108,8 +108,15 @@ PHASE BOUNDARY
 FINAL
 ======================================================================
 14. Final staff-code-reviewer (opus) - entire implementation
-15. Create PR (follow repo template if exists)
-16. Invoke /pr-merge workflow (or user invokes manually)
+15. Push and create PR
+16. Run /pr-status to watch CI and find the review comment
+17. If CHANGES NEEDED:
+    a. Fix the issues reported in the review comment
+    b. Optionally run staff-code-reviewer on the fixes (agent's judgment)
+    c. Commit and push
+    d. Loop back to step 16
+18. If READY TO MERGE:
+    a. Merge if user authorized, or report ready and wait for user
 ```
 
 ## Fix Loop Severity
@@ -323,7 +330,7 @@ Options:
 - `dev-workflow:spec-reviewer` - spec compliance check (sonnet)
 - `dev-workflow:quality-reviewer` - quick quality gate (sonnet)
 - `dev-workflow:staff-code-reviewer` - comprehensive phase/final reviews (opus)
-- `/pr-merge` command - CI check, comment assessment, merge
+- `/pr-status` command - CI watch, review comment polling, readiness verdict
 
 **Works with:**
 - `dev-workflow:writing-plans` - creates plans with model recommendations

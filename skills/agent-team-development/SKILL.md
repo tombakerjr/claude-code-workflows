@@ -157,8 +157,15 @@ FINAL
     git worktree remove .worktrees/team-BRANCH-impl-2
     ...
     git worktree prune
-19. Create PR (follow repo template if exists)
-20. Invoke /pr-merge workflow (or user invokes manually)
+19. Push and create PR
+20. Run /pr-status to watch CI and find the review comment
+21. If CHANGES NEEDED:
+    a. Fix the issues reported in the review comment
+    b. Optionally run staff-code-reviewer on the fixes (agent's judgment)
+    c. Commit and push
+    d. Loop back to step 20
+22. If READY TO MERGE:
+    a. Merge if user authorized, or report ready and wait for user
 ```
 
 ## Spawn Prompt Templates
@@ -357,7 +364,7 @@ git worktree prune
 - Mailbox (agent teams feature) for reviewer <-> implementer communication
 - Git worktrees for workspace isolation
 - `dev-workflow:staff-code-reviewer` - phase/final reviews (run by lead)
-- `/pr-merge` command - CI check, comment assessment, merge
+- `/pr-status` command - CI watch, review comment polling, readiness verdict
 
 **Falls back to:**
 - `dev-workflow:subagent-driven-development` - when agent teams not enabled

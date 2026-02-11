@@ -7,8 +7,8 @@ This file provides guidance to Claude Code when working with this plugin.
 This is a comprehensive Claude Code plugin that supports the full development workflow:
 - **Planning**: Brainstorming, specification, and implementation planning
 - **Implementation**: Test-driven development, systematic debugging, and subagent-driven execution
-- **Review**: Comprehensive code reviews with multiple agent tiers
-- **Merge**: Pre-commit verification, PR merge checklists with delayed comment detection, and git guardrails
+- **Review**: Comprehensive code reviews with multiple agent tiers, CI watching, and review comment polling
+- **Merge**: Git guardrails, readiness checks via `/pr-status`, and review-driven fix loops
 
 ## Plugin Structure
 
@@ -22,9 +22,7 @@ claude-code-pr-workflow/
 │   ├── code-verifier.md        # Pre-commit checks
 │   └── pr-verifier.md          # Pre-merge checks
 ├── commands/               # Slash commands
-│   ├── pr-create.md           # /pr-create
 │   ├── pr-status.md           # /pr-status
-│   ├── pr-merge.md            # /pr-merge
 │   └── context-recovery.md    # /context-recovery
 ├── skills/                 # Workflow skills
 │   ├── agent-team-development/        # Parallel agent teams (preferred)
@@ -81,18 +79,16 @@ When releasing:
 
 ## Key Workflows
 
-### The Merge Checklist (Why This Matters)
+### The PR Readiness Check (Why This Matters)
 
-The `/pr-merge` command enforces:
+The `/pr-status` command enforces:
 
-1. **Typecheck** - Catch type errors before merge
-2. **CI passes** - All checks must show passed
-3. **Wait 10-12 seconds** - Review comments post AFTER CI passes
-4. **Fetch ALL comments** - Don't miss delayed bot comments
-5. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
-6. **Only merge when clear** - Human verification required
+1. **CI passes** - Watch all checks to completion
+2. **Find the review comment** - Poll until the review bot's comment from the current CI run is found
+3. **Read and assess** - Check for CRITICAL, FIX, BLOCKER, DO NOT MERGE
+4. **Never report ready without the comment** - The review always posts; wait for it
 
-**Never skip this checklist.** The 10-12 second wait catches review bot comments that post after CI completes.
+The review bot posts 10-12 seconds after CI completes. `/pr-status` handles this automatically by polling with timestamp validation. The execution skills (`agent-team-development`, `subagent-driven-development`) use `/pr-status` in a loop: check status, fix if needed, push, re-check until READY TO MERGE.
 
 ### Agent Invocation
 
@@ -115,9 +111,8 @@ Skills provide structured workflows for common development tasks:
 ## Customization
 
 Users should customize:
-1. Typecheck commands in `/pr-create` and `/pr-merge`
-2. Review criteria in `staff-code-reviewer.md`
-3. Blocked patterns in `git-guard.py`
+1. Review criteria in `staff-code-reviewer.md`
+2. Blocked patterns in `git-guard.py`
 
 ## Compaction Hints
 

@@ -45,9 +45,7 @@ If there's a CLAUDE.md, read it for project-specific workflow rules.
    - Fetch and review ALL comments
    - Check for CRITICAL/FIX/BLOCKER items
 3. **Use workflow commands:**
-   - `/pr-create` - Create PR (runs typecheck)
-   - `/pr-status` - Check CI and comments
-   - `/pr-merge` - Safe merge with full checklist
+   - `/pr-status` - Watch CI, find review comment, report readiness
 
 ## Step 6: Summary
 
