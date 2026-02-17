@@ -112,7 +112,7 @@ Don't keep trying variations. If 3 attempts failed, your understanding is incomp
 - Follows 4-phase framework to understand failure
 - Uses TDD to implement fix
 
-**Works with `dev-workflow:agent-team-development` / `dev-workflow:subagent-driven-development`:**
+**Works with `dev-workflow:plan-execution`:**
 - When verification step fails, orchestrator may invoke debugger
 - Debugger identifies root cause, TDD implements fix
 - Re-verify in main workflow loop
