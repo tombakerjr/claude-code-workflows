@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Complete development workflow: brainstorming, planning, TDD, debugging, agent team execution, subagent fallback, code review, PR merge",
   "author": {
     "name": "Tom Baker",

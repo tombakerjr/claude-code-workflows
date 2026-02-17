@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/tombakerjr/claude-code-workflows/compare/v2.3.1...v2.3.2) (2026-02-17)
+
+
+### Bug Fixes
+
+* improve pr-create and pr-status reliability, consolidate pr-merge ([#13](https://github.com/tombakerjr/claude-code-workflows/issues/13)) ([29ac5cd](https://github.com/tombakerjr/claude-code-workflows/commit/29ac5cdb7c9f9cdc057a6d6af9d438008ca19b6c))
+
 ## [2.3.1](https://github.com/tombakerjr/claude-code-workflows/compare/v2.3.0...v2.3.1) (2026-02-10)
 
 
