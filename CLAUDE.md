@@ -7,8 +7,8 @@ This file provides guidance to Claude Code when working with this plugin.
 This is a comprehensive Claude Code plugin that supports the full development workflow:
 - **Planning**: Brainstorming, specification, and implementation planning
 - **Implementation**: Test-driven development, systematic debugging, and subagent-driven execution
-- **Review**: Comprehensive code reviews with multiple agent tiers, CI watching, and review comment polling
-- **Merge**: Git guardrails, readiness checks via `/pr-status`, and review-driven fix loops
+- **Review**: Comprehensive code reviews with multiple agent tiers
+- **Merge**: Git guardrails + review-driven fix loops. PR review verification (SHA-anchored sticky-comment protocol) lives in consuming projects' CLAUDE.md + memory, not in this plugin.
 
 ## Plugin Structure
 
@@ -18,12 +18,15 @@ claude-code-pr-workflow/
 │   ├── plugin.json          # Plugin metadata
 │   └── marketplace.json     # For direct installation
 ├── agents/                  # Subagents
-│   ├── staff-code-reviewer.md  # Comprehensive review
-│   ├── code-verifier.md        # Pre-commit checks
-│   └── pr-verifier.md          # Pre-merge checks
+│   ├── code-verifier.md          # Pre-commit checks (typecheck + security scan)
+│   ├── implementer.md            # Implementation agent for plan-execution
+│   ├── pr-verifier.md            # Pre-merge CI/comment verification
+│   ├── quality-reviewer.md       # Quick code-quality gate
+│   ├── quick-reviewer.md         # Combined spec+quality review for simple tasks
+│   ├── spec-reviewer.md          # Verify implementation matches spec
+│   └── staff-code-reviewer.md    # Comprehensive staff/principal review
 ├── commands/               # Slash commands
-│   ├── pr-status.md           # /pr-status
-│   └── context-recovery.md    # /context-recovery
+│   └── context-recovery.md       # /context-recovery
 ├── skills/                 # Workflow skills
 │   ├── plan-execution/                # Execute plans (agent teams or subagents)
 │   ├── test-driven-development/       # TDD workflow
@@ -78,16 +81,17 @@ When releasing:
 
 ## Key Workflows
 
-### The PR Readiness Check (Why This Matters)
+### PR Review Verification (Why This Matters)
 
-The `/pr-status` command enforces:
+Before merging a PR, verify the latest review comment was generated for the **current head commit**. The plugin's `claude-code-review.yml` workflow template stamps the head SHA into the comment body (`**Reviewed commit:** <short-sha>`). Downstream verification:
 
-1. **CI passes** - Watch all checks to completion
-2. **Find the review comment** - Poll until the review bot's comment from the current CI run is found
-3. **Read and assess** - Check for CRITICAL, FIX, BLOCKER, DO NOT MERGE
-4. **Never report ready without the comment** - The review always posts; wait for it
+1. **CI passes** — `gh pr checks <pr> --watch`
+2. **Compare SHA** — parse `**Reviewed commit:** <short-sha>` from the latest `claude[bot]` sticky comment and compare to `gh pr view <pr> --json headRefOid -q .headRefOid`. Mismatch / missing / null → wait for next run (retry 3× with 5s backoff for replication lag).
+3. **Read and assess** — scan for CRITICAL / FIX / BLOCKER markers.
 
-The review bot posts 10-12 seconds after CI completes. `/pr-status` handles this automatically by polling with timestamp validation. The `plan-execution` skill uses `/pr-status` in a loop: check status, fix if needed, push, re-check until READY TO MERGE.
+The `plan-execution` skill runs this inline as part of its final fix-loop (see `skills/plan-execution/SKILL.md`).
+
+Project-specific bits (bot identifier, comment format, repo quirks) belong in each consuming project's CLAUDE.md and per-project memory file, not here.
 
 ### Agent Invocation
 
