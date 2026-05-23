@@ -79,8 +79,10 @@ def main():
             print("Or use /feature-start if available", file=sys.stderr)
             sys.exit(2)
 
-    # Warn on gh pr merge — remind about CI + review-comment SHA verification
-    if re.search(r'gh\s+pr\s+merge', command):
+    # Warn on gh pr merge — remind about CI + review-comment SHA verification.
+    # Anchor to start-of-command or shell-operator boundary to avoid false positives
+    # on commit messages or other strings that mention the command verbatim.
+    if re.search(r'(?:^|&&|;|\|)\s*gh\s+pr\s+merge', command):
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
