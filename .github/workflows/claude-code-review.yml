@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+concurrency:
+  group: claude-code-review-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     # Skip Dependabot PRs - no secrets access, version bumps don't need AI review
@@ -17,9 +21,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
+
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
 
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
@@ -32,6 +41,9 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             PR: #${{ github.event.pull_request.number }}
+
+            Start your review with this exact line:
+            **Reviewed commit:** ${{ steps.sha.outputs.short }}
 
             Review for actionable issues only. Read CLAUDE.md for project context.
 
@@ -51,16 +63,21 @@ jobs:
 
             **Format:**
             ```
+            **Reviewed commit:** abc1234
             CRITICAL: file.ts:123 - SQL injection in user input
             FIX: api.ts:45 - Missing null check causes crash
             TEST: No tests for retry logic
             CONSIDER: Cache could cause 60s stale data
             ```
 
-            If no issues: `LGTM - no blocking issues`
+            If no issues, the body should be:
+            ```
+            **Reviewed commit:** abc1234
+            LGTM - no blocking issues
+            ```
 
             Use inline comments for specific code issues.
 
           claude_args: |
             --max-turns 25
-            --allowedTools Read,Glob,Grep,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment
+            --allowedTools Read,Glob,Grep,Bash(gh pr view:*),Bash(gh pr diff:*),mcp__github_inline_comment__create_inline_comment

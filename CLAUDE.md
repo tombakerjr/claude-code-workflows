@@ -8,7 +8,7 @@ This is a comprehensive Claude Code plugin that supports the full development wo
 - **Planning**: Brainstorming, specification, and implementation planning
 - **Implementation**: Test-driven development, systematic debugging, and subagent-driven execution
 - **Review**: Comprehensive code reviews with multiple agent tiers
-- **Merge**: Pre-commit verification, PR merge checklists with delayed comment detection, and git guardrails
+- **Merge**: Pre-commit verification + git guardrails. PR review verification (SHA-anchored protocol) lives in consuming projects' CLAUDE.md + memory, not in this plugin.
 
 ## Plugin Structure
 
@@ -18,14 +18,15 @@ claude-code-pr-workflow/
 │   ├── plugin.json          # Plugin metadata
 │   └── marketplace.json     # For direct installation
 ├── agents/                  # Subagents
-│   ├── staff-code-reviewer.md  # Comprehensive review
-│   ├── code-verifier.md        # Pre-commit checks
-│   └── pr-verifier.md          # Pre-merge checks
+│   ├── code-verifier.md          # Pre-commit checks (typecheck + security scan)
+│   ├── implementer.md            # Implementation agent for plan-execution
+│   ├── pr-verifier.md            # Pre-merge CI/comment verification
+│   ├── quality-reviewer.md       # Quick code-quality gate
+│   ├── quick-reviewer.md         # Combined spec+quality review for simple tasks
+│   ├── spec-reviewer.md          # Verify implementation matches spec
+│   └── staff-code-reviewer.md    # Comprehensive staff/principal review
 ├── commands/               # Slash commands
-│   ├── pr-create.md           # /pr-create
-│   ├── pr-status.md           # /pr-status
-│   ├── pr-merge.md            # /pr-merge
-│   └── context-recovery.md    # /context-recovery
+│   └── context-recovery.md       # /context-recovery
 ├── skills/                 # Workflow skills
 │   ├── agent-team-development/        # Parallel agent teams (preferred)
 │   ├── subagent-driven-development/   # Sequential subagent execution (fallback)
@@ -81,18 +82,11 @@ When releasing:
 
 ## Key Workflows
 
-### The Merge Checklist (Why This Matters)
+### PR Review Verification (Why This Matters)
 
-The `/pr-merge` command enforces:
+Before merging a PR, verify the latest review comment was generated for the **current head commit**. The plugin's `claude-code-review.yml` workflow template stamps the head SHA into the comment body (`**Reviewed commit:** <short-sha>`). Downstream verification should parse that and compare against `gh pr view --json headRefOid`. Never trust absence or staleness of the comment as approval — timestamp-only checks fail under CI re-runs without a fresh push.
 
-1. **Typecheck** - Catch type errors before merge
-2. **CI passes** - All checks must show passed
-3. **Wait 10-12 seconds** - Review comments post AFTER CI passes
-4. **Fetch ALL comments** - Don't miss delayed bot comments
-5. **Scan for blockers** - CRITICAL, FIX, BLOCKER, DO NOT MERGE
-6. **Only merge when clear** - Human verification required
-
-**Never skip this checklist.** The 10-12 second wait catches review bot comments that post after CI completes.
+The full SHA-anchored verification protocol belongs in each consuming project's CLAUDE.md and per-project memory file, since the bot author identifier and any project-specific quirks vary per repo.
 
 ### Agent Invocation
 
@@ -115,9 +109,8 @@ Skills provide structured workflows for common development tasks:
 ## Customization
 
 Users should customize:
-1. Typecheck commands in `/pr-create` and `/pr-merge`
-2. Review criteria in `staff-code-reviewer.md`
-3. Blocked patterns in `git-guard.py`
+1. Review criteria in `staff-code-reviewer.md`
+2. Blocked patterns in `git-guard.py`
 
 ## Compaction Hints
 
