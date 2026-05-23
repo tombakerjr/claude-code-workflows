@@ -127,14 +127,33 @@ FINAL
 Final staff-code-reviewer (opus) on entire implementation.
 
 Push and create PR.
-Run /pr-status to watch CI and find the review comment.
-If CHANGES NEEDED:
-  a. Fix the issues reported in the review comment
-  b. Optionally run staff-code-reviewer on the fixes (agent's judgment)
-  c. Commit and push
-  d. Re-run /pr-status
-If READY TO MERGE:
-  a. Merge if user authorized, or report ready and wait for user
+
+Verify review readiness (inline; loop until READY):
+  a. Watch CI to completion: `gh pr checks <pr> --watch` (background it if you have
+     other work to do — e.g., another review, local cleanup; the wait shouldn't block).
+  b. If CI fails: report failures, halt — don't proceed to comment checks.
+  c. Get current head SHA: `gh pr view <pr> --json headRefOid -q .headRefOid`.
+  d. Fetch the latest `claude[bot]` sticky comment:
+     `gh api repos/$OWNER/$REPO/issues/<pr>/comments --jq '[.[] | select(.user.login=="claude[bot]")] | last'`
+     If the result is `null` or empty, retry up to 3× with 5s backoff (replication lag
+     between CI green and comment visibility is typically 2–8s).
+  e. Parse the `**Reviewed commit:** <short-sha>` line from the comment body.
+  f. If the head SHA starts with the short SHA → comment is current; proceed to assess.
+  g. If mismatched / missing / still null after retries → wait for the next CI run, then
+     re-verify from step (a). The workflow's concurrency block cancels older in-flight
+     runs on rapid pushes, so the next comment will be from the new head.
+
+Assess the current review:
+  CHANGES NEEDED (review has CRITICAL / FIX / BLOCKER items):
+    a. Fix the issues reported in the review comment.
+    b. Optionally run staff-code-reviewer on the fixes (agent's judgment).
+    c. Commit and push — this triggers a new CI run; older in-flight reviews die.
+    d. Loop back to "Verify review readiness."
+  READY TO MERGE (LGTM with no blockers):
+    a. Merge if user authorized, or report ready and wait for user.
+
+See each project's CLAUDE.md + memory for project-specific details (bot identifier,
+comment format, repo quirks).
 ```
 
 ---
@@ -485,7 +504,9 @@ Options:
 
 **Uses:**
 - `dev-workflow:staff-code-reviewer` — phase/final reviews (opus)
-- `/pr-status` command — CI watch, review comment polling, readiness verdict
+- `gh pr checks --watch` + SHA-anchored sticky-comment verification (inline) — CI watch
+  and review-comment readiness. See "Verify review readiness" in the FINAL section above
+  and each project's CLAUDE.md / memory for SHA-stamp protocol details.
 - Git worktrees — workspace isolation (team mode)
 - Shared task list + mailbox — work coordination (team mode)
 - Task tool with `run_in_background` — parallel dispatch (subagent mode)
