@@ -6,7 +6,7 @@ Blocks dangerous git operations and warns on PR merges.
 This hook scans bash commands and:
 1. BLOCKS direct pushes to main/master branches
 2. BLOCKS commits when on main/master branch
-3. WARNS when using raw `gh pr merge` (recommends running /pr-status first)
+3. WARNS when using raw `gh pr merge` (reminds about CI + review-comment SHA verification)
 
 Usage: Configure in hooks/hooks.json
 """
@@ -79,18 +79,20 @@ def main():
             print("Or use /feature-start if available", file=sys.stderr)
             sys.exit(2)
 
-    # Warn on gh pr merge without running /pr-status first
+    # Warn on gh pr merge — remind about CI + review-comment SHA verification
     if re.search(r'gh\s+pr\s+merge', command):
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "additionalContext": (
-                    "WARNING: You are merging a PR. Did you run /pr-status first?\n"
-                    "1) Wait for CI to pass\n"
-                    "2) Wait for the review comment from the current CI run\n"
-                    "3) Read and assess all comments for blockers\n"
-                    "4) Only merge when /pr-status reports READY TO MERGE\n"
-                    "Run /pr-status before merging."
+                    "WARNING: You are merging a PR. Did you verify it's ready?\n"
+                    "1) CI passed: `gh pr checks <pr> --watch`\n"
+                    "2) Latest sticky review comment SHA matches PR head:\n"
+                    "   parse `**Reviewed commit:** <short-sha>` from the latest\n"
+                    "   claude[bot] comment; compare to `gh pr view <pr> --json headRefOid`\n"
+                    "3) Review has no CRITICAL / FIX / BLOCKER items\n"
+                    "See the project's CLAUDE.md / per-project memory for the full\n"
+                    "SHA-anchored verification protocol."
                 )
             }
         }

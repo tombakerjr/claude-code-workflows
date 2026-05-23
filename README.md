@@ -8,7 +8,7 @@ A comprehensive Claude Code plugin for feature development, bug fixes, and PR wo
 - **Plan execution** - Parallel implementation via agent teams (worktrees + mailbox) or subagents (`run_in_background`), auto-selected
 - **Git worktree support** - Isolated workspaces for parallel development
 - **Pre-commit verification** - Type checking, security scans, debug code detection
-- **PR readiness checks** - CI verification, review comment polling, blocker scanning
+- **PR review verification** - SHA-anchored sticky-comment check + blocker scanning (inline `gh` ops, no slash command wrapper)
 - **Git guardrails** - Blocks direct pushes to main, warns on raw merge commands
 - **Code review agents** - Staff-level comprehensive reviews
 - **Context recovery** - Restore state after context compaction
@@ -69,8 +69,8 @@ flowchart TD
         S --> T{Approved?}
         T -->|No| U[Address feedback]
         U --> S
-        T -->|Yes| V["/pr-status"]
-        V --> W["Watch CI, find review comment, scan for blockers"]
+        T -->|Yes| V["Verify CI + SHA-anchored sticky comment"]
+        V --> W["gh pr checks --watch + match Reviewed commit: SHA to head"]
         W --> X{Blockers?}
         X -->|Yes| U
         X -->|No| Y[Merge & cleanup]
@@ -89,7 +89,7 @@ flowchart TD
 | **2. Isolate** | `using-git-worktrees` | Create isolated workspace (optional, for parallel work) |
 | **3. Plan** | `writing-plans` | Break feature into bite-sized tasks with acceptance criteria |
 | **4. Execute** | `plan-execution` | Parallel via agent teams or subagents (auto-selected) |
-| **5. PR & Merge** | `/pr-status` | Watch CI, find review comment, fix loop until ready, merge |
+| **5. PR & Merge** | Native `gh` ops | `gh pr checks --watch`, SHA-match latest sticky comment, fix loop until ready, merge |
 
 ### Bug Fix Path
 
@@ -98,7 +98,7 @@ flowchart TD
 | **1. Analyze** | `systematic-debugging` | 4-phase root cause analysis (gather, hypothesize, verify, fix) |
 | **2. Test** | `test-driven-development` | Red-green-refactor discipline |
 | **3. Commit** | N/A | Commit fix with conventional message |
-| **4. PR & Merge** | `/pr-status` | Create PR, watch CI, review comment check, merge |
+| **4. PR & Merge** | Native `gh` ops | Create PR, `gh pr checks --watch`, SHA-match sticky comment, merge |
 
 ### Git Guards
 
@@ -108,7 +108,7 @@ The plugin prevents common mistakes:
 |--------|---------|-------------------|
 | `git commit` | Blocked | Allowed |
 | `git push origin main` | Blocked | N/A |
-| `gh pr merge` | Warned (run /pr-status first) | Warned (run /pr-status first) |
+| `gh pr merge` | Warned (verify CI + SHA match) | Warned (verify CI + SHA match) |
 
 ### Execution Preference
 
@@ -122,8 +122,8 @@ When executing implementation plans (from `writing-plans` or similar), use `dev-
 ### Option 1: Direct from GitHub (Recommended)
 
 ```bash
-/plugin marketplace add tombakerjr/claude-code-pr-workflow
-/plugin install dev-workflow@claude-code-pr-workflow
+/plugin marketplace add tombakerjr/claude-code-workflows
+/plugin install dev-workflow@claude-code-workflows
 ```
 
 Then restart Claude Code.
@@ -131,8 +131,8 @@ Then restart Claude Code.
 ### Option 2: From Local Clone
 
 ```bash
-git clone https://github.com/tombakerjr/claude-code-pr-workflow.git
-/plugin marketplace add /path/to/claude-code-pr-workflow
+git clone https://github.com/tombakerjr/claude-code-workflows.git
+/plugin marketplace add /path/to/claude-code-workflows
 /plugin install dev-workflow@tombakerjr-claude-tools
 ```
 
@@ -144,7 +144,6 @@ Then restart Claude Code.
 
 | Command | Description |
 |---------|-------------|
-| `/pr-status` | **Watch CI, find review comment, scan for blockers, report readiness** |
 | `/context-recovery` | Recover git/PR state after context compaction |
 
 ### Agents
@@ -179,29 +178,32 @@ Then restart Claude Code.
 | `stop-check.sh` | Stop | Warns about uncommitted changes, open PRs, changes on main |
 | `workflow-preferences.sh` | SessionStart | Injects execution preferences (use plan-execution) |
 
-## The PR Readiness Check
+## PR Review Verification
 
-The `/pr-status` command enforces this critical workflow:
+Before merging a PR, verify the latest review comment was generated for the **current head commit**. The plugin's `claude-code-review.yml` workflow template stamps the head SHA into the comment body (`**Reviewed commit:** <short-sha>`). Downstream verification:
 
-1. **CI passes** — Watch all checks to completion with `gh pr checks --watch`
-2. **Find the review comment** — Poll until the review bot's comment from the current CI run is found
-3. **Read and assess** — Check for CRITICAL, FIX, BLOCKER, DO NOT MERGE
-4. **Report verdict** — READY TO MERGE or CHANGES NEEDED with specifics
+1. **CI passes** — `gh pr checks <pr> --watch`
+2. **SHA match** — parse `**Reviewed commit:** <short-sha>` from the latest `claude[bot]` sticky comment; compare to `gh pr view <pr> --json headRefOid -q .headRefOid`. Mismatch / missing / null → wait for next run (retry 3× with 5s backoff for replication lag).
+3. **Assess** — scan for CRITICAL / FIX / BLOCKER markers.
+4. **Verdict** — READY TO MERGE or CHANGES NEEDED.
 
-**Why poll for the review comment?** The review workflow ALWAYS posts a comment (either approving or requesting changes). The absence of this comment is NOT tacit approval — `/pr-status` polls with timestamp validation to ensure no review feedback is missed.
+**Why SHA match instead of timestamp polling?** Timestamp arithmetic is brittle under GitHub's distributed clock skew and silently fails when CI is re-run without a fresh push (the old comment still passes a timestamp filter). The SHA stamp is direct and unambiguous. The review workflow ALWAYS posts a comment — never treat absence or staleness as tacit approval.
+
+The `plan-execution` skill runs this inline as part of its final fix-loop. Project-specific bits (bot identifier, comment format, repo quirks) belong in each consuming project's CLAUDE.md and per-project memory.
 
 ## Usage Examples
 
 ### Checking PR Readiness
 ```
 > Is my PR ready to merge?
-# Claude runs /pr-status — watches CI, finds review comment, reports verdict
+# Claude runs gh pr checks --watch, then SHA-matches the latest sticky review comment
+# against PR head, then reports verdict (READY TO MERGE | CHANGES NEEDED)
 ```
 
 ### Merging a PR
 ```
 > Merge my PR
-# Claude runs /pr-status first, then merges if READY TO MERGE
+# Claude verifies readiness (CI + SHA match) first, then merges if READY TO MERGE
 ```
 
 ### Code Review
