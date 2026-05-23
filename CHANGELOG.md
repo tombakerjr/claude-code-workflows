@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.3.2...v2.4.0) (2026-05-23)
+
+
+### Features
+
+* **ci:** sha-anchored review verification + drop /pr-status ([#16](https://github.com/tombakerjr/claude-code-workflows/issues/16)) ([a7a3da6](https://github.com/tombakerjr/claude-code-workflows/commit/a7a3da6b848a71e1c3910aaf8fec6278008e6a8a))
+* **hooks:** one-shot PR-merge warning per session+PR (block-then-allow) ([#19](https://github.com/tombakerjr/claude-code-workflows/issues/19)) ([a21238b](https://github.com/tombakerjr/claude-code-workflows/commit/a21238b08fc25ba0989ab88405dffa76ecd26c95))
+
 ## [2.3.2](https://github.com/tombakerjr/claude-code-workflows/compare/v2.3.1...v2.3.2) (2026-02-17)
 
 
