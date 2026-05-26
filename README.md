@@ -177,6 +177,20 @@ Then restart Claude Code.
 | `task-completed-gate.py` | TaskCompleted | Prevents implementation tasks from being marked complete before review |
 | `stop-check.sh` | Stop | Warns about uncommitted changes, open PRs, changes on main |
 | `workflow-preferences.sh` | SessionStart | Injects execution preferences (use plan-execution) |
+| `inject-current-time.py` | UserPromptSubmit | Injects current local time on every prompt (~12-25 tokens). Optional late-hour and US-DST nudges via env vars — see below |
+
+#### Time-injection hook
+
+`inject-current-time.py` runs on every user prompt and prepends a bracketed system note like `[current time: 2026-05-26 14:04 EDT]`. This closes the wall-clock-awareness gap caused by Claude's training cutoff — without it, the model cannot reason reliably about "this morning" vs. "six months ago," whether a release / changelog entry is recent, or judge urgency.
+
+Two optional suffixes, both off by default and opt-in via environment variables (set in your shell rc):
+
+| Env var | Effect |
+|---------|--------|
+| `CLAUDE_TIME_LATE_START` + `CLAUDE_TIME_LATE_END` | When both are set to integer hours and the current hour falls in `[start, end)`, the note gets a `past late-hour wrap-up cutoff` suffix. Useful as a self-care nudge for late-night coders. E.g. `CLAUDE_TIME_LATE_START=2 CLAUDE_TIME_LATE_END=5` |
+| `CLAUDE_TIME_DST_REGION=us` | Adds a US DST transition reminder within ±3 days of the spring-forward (2nd Sunday of March) and fall-back (1st Sunday of November) transitions. Only `us` is implemented. |
+
+The hook is pure Python stdlib, ~5 ms per invocation. To disable entirely, comment out its entry in `hooks/hooks.json` after install or override at the user-settings level.
 
 ## PR Review Verification
 
