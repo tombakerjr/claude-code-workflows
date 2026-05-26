@@ -18,6 +18,7 @@ import json
 import os
 import random
 import re
+import shlex
 import subprocess
 import sys
 from datetime import datetime
@@ -109,15 +110,49 @@ def cleanup_old_state_files():
 
 
 def merge_warning_key(command):
-    """Build the dedup key for a PR-merge warning, based on repo+PR if available."""
-    # Extract PR number from the command if present (gh pr merge <num> ...)
-    pr_match = re.search(r'gh\s+pr\s+merge\s+(\d+)', command)
-    pr_part = pr_match.group(1) if pr_match else "current"
-    # Extract repo slug — prefer --repo flag, fall back to current repo, then unknown
-    repo_match = re.search(r'--repo\s+(\S+)', command)
-    if repo_match:
-        repo_part = repo_match.group(1)
-    else:
+    """Build the dedup key for a PR-merge warning, based on repo+PR if available.
+
+    The PR number can appear anywhere after the `merge` subcommand — before
+    or after flags like `--squash` or `--repo owner/repo` — so we tokenize
+    rather than rely on positional regex. The first bare-integer token after
+    `merge` is the PR number; if none is present, `gh pr merge` operates on
+    the current branch's PR and we use "current" as the key part.
+    """
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        tokens = command.split()
+
+    pr_part = "current"
+    repo_part = None
+
+    # Only enter arg-parsing after seeing the full `gh pr merge` subcommand
+    # sequence. Without this, compound commands like `git merge 123 && gh pr
+    # merge` would pick up `123` from the `git merge` operand.
+    merge_idx = -1
+    for j in range(len(tokens) - 2):
+        if tokens[j] == "gh" and tokens[j + 1] == "pr" and tokens[j + 2] == "merge":
+            merge_idx = j + 2
+            break
+    if merge_idx == -1:
+        return f"merge:{get_repo_slug() or 'unknown-repo'}/current"
+
+    i = merge_idx + 1
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok == "--repo" and i + 1 < len(tokens):
+            repo_part = tokens[i + 1]
+            i += 2
+            continue
+        if tok.startswith("--repo="):
+            repo_part = tok.split("=", 1)[1]
+            i += 1
+            continue
+        if pr_part == "current" and tok.isdigit():
+            pr_part = tok
+        i += 1
+
+    if not repo_part:
         repo_part = get_repo_slug() or "unknown-repo"
     return f"merge:{repo_part}/{pr_part}"
 
