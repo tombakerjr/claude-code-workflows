@@ -39,7 +39,9 @@ claude-code-pr-workflow/
 │   ├── run-hook.cmd           # Cross-platform wrapper
 │   ├── git-guard.py           # PreToolUse: block main push
 │   ├── task-completed-gate.py # TaskCompleted: review gate for agent teams
-│   └── stop-check.sh          # Stop: warn on uncommitted
+│   ├── stop-check.sh          # Stop: warn on uncommitted
+│   ├── workflow-preferences.sh # SessionStart: execution preferences
+│   └── inject-current-time.py # UserPromptSubmit: wall-clock awareness
 ├── CLAUDE.md
 └── README.md
 ```
