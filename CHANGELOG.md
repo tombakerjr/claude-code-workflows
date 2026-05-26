@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.4.1...v2.5.0) (2026-05-26)
+
+
+### Features
+
+* **hooks:** inject current local time on every user prompt ([#22](https://github.com/tombakerjr/claude-code-workflows/issues/22)) ([26af9c6](https://github.com/tombakerjr/claude-code-workflows/commit/26af9c68a6f0f1e5c629a5c47355453d37060f26))
+
 ## [2.4.1](https://github.com/tombakerjr/claude-code-workflows/compare/v2.4.0...v2.4.1) (2026-05-26)
 
 
