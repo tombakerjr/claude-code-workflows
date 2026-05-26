@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/tombakerjr/claude-code-workflows/compare/v2.4.0...v2.4.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **hooks:** extract pr number from any position in gh pr merge ([#20](https://github.com/tombakerjr/claude-code-workflows/issues/20)) ([56f398f](https://github.com/tombakerjr/claude-code-workflows/commit/56f398f3ac6811147b0e402204a7799aaf5b4e76))
+
 ## [2.4.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.3.2...v2.4.0) (2026-05-23)
 
 
