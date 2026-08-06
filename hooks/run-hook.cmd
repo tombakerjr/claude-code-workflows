@@ -3,6 +3,11 @@
 REM Polyglot wrapper: runs .sh/.py scripts cross-platform
 REM Usage: run-hook.cmd <script-name> [args...]
 REM The script should be in the same directory as this wrapper
+REM
+REM This file exists ONLY for Windows dispatch (hooks.json references one
+REM script name that works on every OS). It does no env normalization,
+REM argument rewriting, or anything else beyond picking python vs bash by
+REM extension — don't assume it does more when reading hooks.json cold.
 
 REM Check file extension and run appropriately
 set "script=%~1"
