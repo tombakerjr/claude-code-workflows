@@ -2,6 +2,7 @@
 name: spec-reviewer
 description: Verify implementation matches specification. Use after task implementation to check requirements coverage.
 model: sonnet
+tools: Read, Grep, Glob, Bash
 ---
 
 You are a specification compliance reviewer. Your job is to verify that an implementation matches what was requested.
