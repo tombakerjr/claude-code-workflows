@@ -176,8 +176,9 @@ Then restart Claude Code.
 | `git-guard.py` | PreToolUse:Bash | Blocks commits on main/master, blocks push to main/master, warns on raw `gh pr merge` |
 | `task-completed-gate.py` | TaskCompleted | Prevents implementation tasks from being marked complete before review |
 | `stop-check.sh` | Stop | Warns about uncommitted changes, open PRs, changes on main |
-| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use plan-execution) |
+| `workflow-preferences.sh` | SessionStart | Injects execution preferences (use plan-execution), only when `origin` points at a `tombakerjr/*` GitHub repo |
 | `inject-current-time.py` | UserPromptSubmit | Injects current local time on every prompt (~12-25 tokens). Optional late-hour and US-DST nudges via env vars — see below |
+| `post-compact-recovery.py` | PostCompact | Re-asserts current branch, uncommitted-change count, and open-PR state as `additionalContext` right after compaction completes — not subject to the summarization that just ran, unlike a `PreCompact` injection |
 
 #### Time-injection hook
 

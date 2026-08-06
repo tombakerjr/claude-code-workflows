@@ -40,8 +40,9 @@ claude-code-pr-workflow/
 │   ├── git-guard.py           # PreToolUse: block main push
 │   ├── task-completed-gate.py # TaskCompleted: review gate for agent teams
 │   ├── stop-check.sh          # Stop: warn on uncommitted
-│   ├── workflow-preferences.sh # SessionStart: execution preferences
-│   └── inject-current-time.py # UserPromptSubmit: wall-clock awareness
+│   ├── workflow-preferences.sh # SessionStart: execution preferences (tombakerjr/* remotes only)
+│   ├── inject-current-time.py # UserPromptSubmit: wall-clock awareness
+│   └── post-compact-recovery.py # PostCompact: re-assert branch/PR state after compaction
 ├── CLAUDE.md
 └── README.md
 ```
