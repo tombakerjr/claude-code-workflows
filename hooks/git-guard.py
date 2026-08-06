@@ -5,7 +5,10 @@ Blocks dangerous git operations and warns on PR merges.
 
 This hook scans bash commands and:
 1. BLOCKS direct pushes to main/master branches
-2. BLOCKS commits when on main/master branch
+2. BLOCKS commits when on main/master branch — resolves the branch being
+   committed to via an explicit `git -C <path>` or a leading `cd <path> &&`,
+   so a commit inside a worktree is checked against the worktree's branch,
+   not this hook process's own cwd.
 3. WARNS on first PR-merge attempt per session+PR (BLOCK-then-allow-on-retry).
    After the warning fires once for a given (session, PR), subsequent attempts
    in the same session proceed silently. Pattern mirrors anthropics/claude-code's
@@ -34,6 +37,40 @@ def parse_git_c_path(command):
     if match:
         return match.group(1) if match.group(1) else match.group(2)
     return None
+
+
+def parse_cd_path(command):
+    """Extract the path from a leading `cd <path> &&` / `cd <path>;`, if present.
+
+    Covers the "cd-first" worktree pattern (cd into a worktree, then run git
+    commands) documented in implementer.md and using-git-worktrees/SKILL.md,
+    which `-C` parsing alone doesn't catch. Anchored to start-of-command or a
+    shell-operator boundary — same style as the commit/merge regexes below —
+    so a `cd` mentioned later in a compound command, or inside a heredoc/
+    string argument, isn't mistaken for the leading directory change.
+    """
+    match = re.search(
+        r'(?:^|&&|;|\|)\s*cd\s+(?:"([^"]+)"|(\S+))\s*(?:&&|;)', command
+    )
+    if match:
+        return match.group(1) if match.group(1) else match.group(2)
+    return None
+
+
+def resolve_worktree_path(path):
+    """Resolve a possibly-relative worktree path against CLAUDE_PROJECT_DIR.
+
+    Absolute paths pass through unchanged. Relative paths resolve against
+    CLAUDE_PROJECT_DIR when set; otherwise they're returned as-is and let
+    the subsequent `git -C <path>` call resolve them against this hook
+    process's own cwd (the same fallback stop-check.sh uses).
+    """
+    if not path or os.path.isabs(path):
+        return path
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    if not project_dir:
+        return path
+    return os.path.join(project_dir, path)
 
 
 def get_current_branch(cwd=None):
@@ -190,7 +227,12 @@ def main():
     # Match git commit at the start of the command or after shell operators (&&, ;, |)
     # but NOT inside heredocs or string arguments (no re.MULTILINE — ^ only matches string start)
     if re.search(r'(?:^|&&|;|\|)\s*git\s+(-C\s+(?:"[^"]+"|(\S+))\s+)?commit', command):
-        worktree_path = parse_git_c_path(command)
+        # Explicit `-C <path>` takes precedence when both are present, since
+        # it's the more specific signal for this particular git invocation.
+        # Otherwise fall back to a leading `cd <path> &&` (see parse_cd_path).
+        worktree_path = parse_git_c_path(command) or resolve_worktree_path(
+            parse_cd_path(command)
+        )
         branch = get_current_branch(cwd=worktree_path)
         if branch in ["main", "master"]:
             print("❌ BLOCKED: Cannot commit directly to main/master branch", file=sys.stderr)
