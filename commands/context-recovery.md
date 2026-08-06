@@ -39,13 +39,13 @@ If there's a CLAUDE.md, read it for project-specific workflow rules.
 **CRITICAL WORKFLOWS - NEVER SKIP:**
 
 1. **All changes through PRs** - Never push directly to main
-2. **Before merge:**
-   - Wait for CI to pass
-   - Wait 10-12 seconds for delayed comments
-   - Fetch and review ALL comments
-   - Check for CRITICAL/FIX/BLOCKER items
-3. **Use workflow commands:**
-   - `/pr-status` - Watch CI, find review comment, report readiness
+2. **Before merge, verify inline (no dedicated slash command):**
+   - `gh pr checks <pr> --watch` - CI must pass
+   - Parse `**Reviewed commit:** <short-sha>` from the latest `claude[bot]`
+     sticky comment; compare to `gh pr view <pr> --json headRefOid -q .headRefOid`
+   - Mismatch / missing / null -> retry up to 3x with 5s backoff, then wait
+     for the next CI run
+   - Scan the matched comment for CRITICAL / FIX / BLOCKER markers
 
 ## Step 6: Summary
 

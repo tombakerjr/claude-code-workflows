@@ -460,4 +460,5 @@ The execution skill will:
 2. Read this plan and extract all tasks with model recommendations
 3. Execute tasks in parallel with verification and review gates
 4. Run staff-code-reviewer at phase boundaries and final
-5. Create PR and run /pr-status loop until ready
+5. Create PR and loop the SHA-anchored review protocol (`gh pr checks --watch`
+   + sticky-comment SHA match) until ready
