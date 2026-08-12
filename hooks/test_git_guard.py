@@ -171,6 +171,27 @@ class ResolveCommitDirTests(unittest.TestCase):
         # for a later command in this string (there is none).
         self.assertIsNone(self._resolve("git commit -m x; cd /wt"))
 
+    def test_cd_inside_double_quoted_string_is_ignored(self):
+        # Regression (false-allow): a cd-shaped substring inside a quoted
+        # argument never changes the shell's directory — the commit really
+        # runs in the hook's cwd and must be checked there.
+        self.assertIsNone(
+            self._resolve('echo "note && cd /tmp && more" && git commit -m x')
+        )
+
+    def test_cd_inside_single_quoted_string_is_ignored(self):
+        self.assertIsNone(
+            self._resolve("echo 'a && cd /tmp && b' && git commit -m x")
+        )
+
+    def test_real_cd_with_quoted_string_earlier_still_resolves(self):
+        # Quote-awareness must not disable legitimate cds elsewhere in the
+        # same command.
+        self.assertEqual(
+            self._resolve('echo "cd /decoy &&" && cd /wt && git commit -m x'),
+            "/wt",
+        )
+
 
 class ResolveWorktreePathTests(unittest.TestCase):
     """Covers resolving a relative path against CLAUDE_PROJECT_DIR, with
@@ -328,6 +349,34 @@ class GitGuardHookIntegrationTests(unittest.TestCase):
         result = self._invoke_hook(
             f'git -C . status && cd {worktree} && git commit -m "test"'
         )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+    def test_cd_inside_quoted_string_does_not_launder_main_commit(self):
+        # Regression for the review CRITICAL: the embedded `cd /tmp` never
+        # executes (it's inside the echo string), so the commit genuinely
+        # runs on main and must be blocked — previously the false cd match
+        # resolved to a non-repo dir, the branch lookup returned None, and
+        # the guard failed open.
+        result = self._invoke_hook(
+            'echo "note && cd /tmp && more" && git commit -m "x"'
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("BLOCKED", result.stderr)
+
+    def test_nonexistent_worktree_path_fails_closed(self):
+        # A real cd to a path that isn't a usable git repo must fall back
+        # to checking the hook's own cwd (main here), not silently allow.
+        result = self._invoke_hook(
+            'cd .worktrees/does-not-exist && git commit -m "x"'
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("BLOCKED", result.stderr)
+
+    def test_quoted_git_commit_text_is_not_a_commit(self):
+        # False-block guard: `git commit` appearing inside a string argument
+        # (e.g. echoed advice) is not a real invocation and must be allowed
+        # even on main.
+        result = self._invoke_hook('echo "review, then && git commit -m done"')
         self.assertEqual(result.returncode, 0, msg=result.stderr)
 
     def test_cd_into_worktree_with_relative_path_resolves_via_project_dir(self):
