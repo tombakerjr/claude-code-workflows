@@ -1,5 +1,5 @@
 {
-  "description": "PR workflow guardrails - blocks main push, warns on raw merge, session exit checks",
+  "description": "Deterministic git guardrails - blocks main/master commits and pushes, warns once per PR merge, flags uncommitted work when a session stops",
   "hooks": {
     "PreToolUse": [
       {
@@ -20,38 +20,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" stop-check.sh",
             "timeout": 10
-          }
-        ]
-      }
-    ],
-    "TaskCompleted": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" task-completed-gate.py",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" workflow-preferences.sh"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" inject-current-time.py",
-            "timeout": 5
           }
         ]
       }

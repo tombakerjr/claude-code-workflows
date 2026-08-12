@@ -5,7 +5,12 @@ Blocks dangerous git operations and warns on PR merges.
 
 This hook scans bash commands and:
 1. BLOCKS direct pushes to main/master branches
-2. BLOCKS commits when on main/master branch
+2. BLOCKS commits when on main/master branch. The branch is resolved per
+   commit invocation: an explicit `git -C <path>` on that invocation wins,
+   otherwise the last `cd <path> &&` preceding it, otherwise the hook's own
+   cwd. This keeps a commit inside a worktree checked against the worktree's
+   branch, and keeps an unrelated `-C`/`cd` elsewhere in a compound command
+   from hijacking the check.
 3. WARNS on first PR-merge attempt per session+PR (BLOCK-then-allow-on-retry).
    After the warning fires once for a given (session, PR), subsequent attempts
    in the same session proceed silently. Pattern mirrors anthropics/claude-code's
@@ -26,13 +31,61 @@ from datetime import datetime
 
 WARNING_STATE_DIR = os.path.expanduser("~/.claude")
 
+# A `git commit` at the start of the command or after a shell operator
+# (&&, ;, |) — not inside heredocs or string arguments (no re.MULTILINE,
+# so ^ only matches string start). Captures that invocation's own
+# `-C <path>` if present (quoted or unquoted).
+COMMIT_RE = re.compile(
+    r'(?:^|&&|;|\|)\s*git\s+(?:-C\s+(?:"([^"]+)"|(\S+))\s+)?commit\b'
+)
 
-def parse_git_c_path(command):
-    """Extract the -C <path> argument from a git command, if present."""
-    # Handle both quoted and unquoted paths: git -C "path with spaces" or git -C path
-    match = re.search(r'git\s+-C\s+(?:"([^"]+)"|(\S+))', command)
-    if match:
-        return match.group(1) if match.group(1) else match.group(2)
+# A directory change that affects subsequent commands: `cd <path>` at the
+# start of the command or after a shell operator, followed by another
+# operator. A trailing bare `cd` with nothing chained after it doesn't
+# change the directory for a later git call and is ignored. The trailing
+# operator is a lookahead (not consumed) so chained cds — `cd a && cd b &&`
+# — don't swallow the boundary the next match needs.
+CD_RE = re.compile(
+    r'(?:^|&&|;|\|)\s*cd\s+(?:"([^"]+)"|(\S+))(?=\s*(?:&&|;))'
+)
+
+
+def resolve_worktree_path(path):
+    """Resolve a possibly-relative path against CLAUDE_PROJECT_DIR.
+
+    Absolute paths pass through unchanged. Relative paths resolve against
+    CLAUDE_PROJECT_DIR when set; otherwise they're returned as-is and the
+    subsequent `git -C <path>` call resolves them against this hook
+    process's own cwd (the same fallback stop-check.sh uses).
+    """
+    if not path or os.path.isabs(path):
+        return path
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    if not project_dir:
+        return path
+    return os.path.join(project_dir, path)
+
+
+def resolve_commit_dir(command, commit_match):
+    """Directory a matched `git commit` invocation will run in.
+
+    Precedence: the invocation's own `-C <path>` (captured by COMMIT_RE),
+    then the last `cd <path> &&` that appears BEFORE the invocation, then
+    None (the hook's own cwd). A `cd` positioned after the commit — e.g.
+    `git commit -m x && cd elsewhere` — runs after the commit and must not
+    influence the check.
+    """
+    c_path = commit_match.group(1) or commit_match.group(2)
+    if c_path:
+        return resolve_worktree_path(c_path)
+
+    last_cd = None
+    for cd in CD_RE.finditer(command):
+        if cd.start() >= commit_match.start():
+            break
+        last_cd = cd.group(1) or cd.group(2)
+    if last_cd:
+        return resolve_worktree_path(last_cd)
     return None
 
 
@@ -186,19 +239,16 @@ def main():
             print(f"Command: {command}", file=sys.stderr)
             sys.exit(2)
 
-    # Block commits on main/master branch
-    # Match git commit at the start of the command or after shell operators (&&, ;, |)
-    # but NOT inside heredocs or string arguments (no re.MULTILINE — ^ only matches string start)
-    if re.search(r'(?:^|&&|;|\|)\s*git\s+(-C\s+(?:"[^"]+"|(\S+))\s+)?commit', command):
-        worktree_path = parse_git_c_path(command)
-        branch = get_current_branch(cwd=worktree_path)
+    # Block commits on main/master. Every commit invocation in a compound
+    # command is checked against the directory it will actually run in.
+    for commit_match in COMMIT_RE.finditer(command):
+        commit_dir = resolve_commit_dir(command, commit_match)
+        branch = get_current_branch(cwd=commit_dir)
         if branch in ["main", "master"]:
             print("❌ BLOCKED: Cannot commit directly to main/master branch", file=sys.stderr)
             print("", file=sys.stderr)
             print("Create a feature branch first:", file=sys.stderr)
             print("  git checkout -b feature/your-feature-name", file=sys.stderr)
-            print("", file=sys.stderr)
-            print("Or use /feature-start if available", file=sys.stderr)
             sys.exit(2)
 
     # Warn on PR-merge — remind about CI + review-comment SHA verification.

@@ -22,3 +22,6 @@ __pycache__/
 
 # Git worktrees
 .worktrees/
+
+# Serena onboarding memories (machine-local; Serena no longer in use)
+.serena/
