@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "version": "2.5.0",
+  "version": "3.0.0",
   "description": "Deterministic git guardrails for Claude Code: blocks commits and pushes to main/master, warns once before PR merges, flags uncommitted work when a session stops",
   "author": {
     "name": "Tom Baker",

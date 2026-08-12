@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.5.0...v3.0.0) (2026-08-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* removes all prompt-level scaffolding — 6 skills, 7 agents, /context-recovery, and the SessionStart/UserPromptSubmit/TaskCompleted hooks. The plugin is now two hooks: git-guard.py (PreToolUse) and stop-check.sh (Stop).
+
+### Features
+
+* strip plugin to deterministic git guardrails ([#25](https://github.com/tombakerjr/claude-code-workflows/issues/25)) ([43ec3f2](https://github.com/tombakerjr/claude-code-workflows/commit/43ec3f2540afece75b01cff821a29858a5da6099))
+
 ## [2.5.0](https://github.com/tombakerjr/claude-code-workflows/compare/v2.4.1...v2.5.0) (2026-05-26)
 
 
